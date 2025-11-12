@@ -27,6 +27,15 @@ A modern ToDo application built with the OpenAI Apps SDK, featuring a Python MCP
 - Python 3.10+ (if not using Nix)
 - ngrok account (optional, for public access)
 
+### Note on Nix and Unfree Packages
+
+This project uses **ngrok** (an unfree package) in the Nix environment. The configuration files (`shell.nix` and `flake.nix`) are already set up to allow unfree packages.
+
+**Alternatives if you don't want to use ngrok:**
+- Remove `ngrok` from the `buildInputs` in both Nix files
+- Use alternatives like **localtunnel**, **Cloudflare Tunnel**, or **serveo.net**
+- Install ngrok separately outside of Nix: `brew install ngrok` (macOS) or download from [ngrok.com](https://ngrok.com)
+
 ## Quick Start
 
 ### Option 1: Using Nix (Recommended)
@@ -37,6 +46,8 @@ A modern ToDo application built with the OpenAI Apps SDK, featuring a Python MCP
    # or with flakes
    nix develop
    ```
+
+   *Note: The Nix configuration includes ngrok (unfree). This is already configured to work.*
 
 2. **Initialize the project**:
    ```bash
