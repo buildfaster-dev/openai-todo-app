@@ -7,17 +7,25 @@ reference those widgets via openai/outputTemplate metadata.
 
 from __future__ import annotations
 
+import os
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import mcp.types as types
+from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from .models import TodoCreate, TodoUpdate, TodoStatus
 from .storage import storage
+
+# Load environment variables
+load_dotenv()
+
+# Get public URL from environment (fallback to localhost for local testing)
+PUBLIC_URL = os.getenv("PUBLIC_URL", "http://localhost:8000")
 
 
 # MIME type for HTML widgets in OpenAI Apps SDK
@@ -432,8 +440,8 @@ def _get_todo_list_html() -> str:
         let currentFilter = 'all';
         let editingId = null;
 
-        // Get API base URL (relative to current page)
-        const API_BASE = window.location.origin + '/api';
+        // Get API base URL from server configuration
+        const API_BASE = '{PUBLIC_URL}/api';
 
         // Render todos
         function renderTodos() {{
@@ -821,7 +829,7 @@ def _get_stats_html() -> str:
     </div>
 
     <script>
-        const API_BASE = window.location.origin + '/api';
+        const API_BASE = '{PUBLIC_URL}/api';
 
         async function refreshStats() {{
             try {{
