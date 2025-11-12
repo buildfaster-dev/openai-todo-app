@@ -7,7 +7,8 @@ dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
     "pydantic>=2.9.0",
-    "fastmcp>=0.2.0",
+    "mcp[fastapi]>=0.1.0",
+    "starlette>=0.49.3",
 ]
 
 [project.optional-dependencies]
