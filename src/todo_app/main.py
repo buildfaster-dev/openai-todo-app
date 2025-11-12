@@ -12,11 +12,16 @@ from .models import TodoItem, TodoCreate, TodoUpdate, TodoStatus
 from .storage import storage
 from .mcp_server import mcp
 
-# Create FastAPI app
+# Create MCP ASGI app first (needed for lifespan)
+mcp_app = mcp.http_app(path="/")
+
+# Create FastAPI app with MCP lifespan
+# This is required for proper task group initialization in FastMCP
 app = FastAPI(
     title="OpenAI ToDo App",
     description="A ToDo application built with OpenAI Apps SDK and MCP",
     version="0.1.0",
+    lifespan=mcp_app.lifespan,  # Pass MCP lifespan to parent app
 )
 
 # Add CORS middleware for development
@@ -33,8 +38,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)
 
 # Mount FastMCP server (handles /mcp/* endpoints with proper MCP protocol)
-# Creates ASGI app from MCP server with Streamable HTTP transport
-mcp_app = mcp.http_app(path="/")
+# The lifespan is already integrated above, so mounting just adds the routes
 app.mount("/mcp", mcp_app)
 
 
