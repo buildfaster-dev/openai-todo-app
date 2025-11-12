@@ -126,7 +126,7 @@ def _tool_invocation_meta(widget: TodoWidget) -> Dict[str, Any]:
 def _get_todo_list_html() -> str:
     """Generate interactive HTML for todo list widget"""
     todos = storage.list()
-    todos_data = [todo.model_dump() for todo in todos]
+    todos_data = [todo.model_dump(mode='json') for todo in todos]
     stats = storage.get_stats()
 
     # Serialize todos data for JavaScript
@@ -1088,7 +1088,7 @@ async def _call_tool_request(req: types.CallToolRequest) -> types.ServerResult:
                     )
                 ],
                 structuredContent={
-                    "todos": [todo.model_dump() for todo in todos],
+                    "todos": [todo.model_dump(mode='json') for todo in todos],
                     "stats": stats,
                 },
                 _meta=_tool_invocation_meta(widget),
@@ -1113,7 +1113,7 @@ async def _call_tool_request(req: types.CallToolRequest) -> types.ServerResult:
                             text=f"Created todo: {todo.title}",
                         )
                     ],
-                    structuredContent={"todo": todo.model_dump()},
+                    structuredContent={"todo": todo.model_dump(mode='json')},
                 )
             )
 
@@ -1129,7 +1129,7 @@ async def _call_tool_request(req: types.CallToolRequest) -> types.ServerResult:
                         )
                     ],
                     structuredContent={
-                        "todos": [todo.model_dump() for todo in todos],
+                        "todos": [todo.model_dump(mode='json') for todo in todos],
                         "count": len(todos),
                     },
                 )
@@ -1167,7 +1167,7 @@ async def _call_tool_request(req: types.CallToolRequest) -> types.ServerResult:
                             text=f"Updated todo: {todo.title}",
                         )
                     ],
-                    structuredContent={"todo": todo.model_dump()},
+                    structuredContent={"todo": todo.model_dump(mode='json')},
                 )
             )
 
@@ -1222,7 +1222,7 @@ async def _call_tool_request(req: types.CallToolRequest) -> types.ServerResult:
                             text=f"Todo: {todo.title}",
                         )
                     ],
-                    structuredContent={"todo": todo.model_dump()},
+                    structuredContent={"todo": todo.model_dump(mode='json')},
                 )
             )
 
