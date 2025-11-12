@@ -12,17 +12,16 @@ from .models import TodoItem, TodoCreate, TodoUpdate, TodoStatus
 from .storage import storage
 from .mcp_server import mcp
 
-# Create MCP ASGI app with Streamable HTTP transport (for OpenAI Apps SDK)
-# http_app() now defaults to Streamable HTTP (modern MCP protocol, replaced SSE)
-mcp_app = mcp.http_app()
+# Create MCP HTTP app with Streamable HTTP transport
+# Set path="/" so routes are at root of the mounted app
+mcp_http_app = mcp.http_app(path="/", transport="streamable-http")
 
-# Create FastAPI app with MCP lifespan
-# This is required for proper task group initialization in FastMCP
+# Create main FastAPI app with MCP lifespan for proper task group initialization
 app = FastAPI(
     title="OpenAI ToDo App",
     description="A ToDo application built with OpenAI Apps SDK and MCP",
     version="0.1.0",
-    lifespan=mcp_app.lifespan,  # Pass MCP lifespan to parent app
+    lifespan=mcp_http_app.lifespan,
 )
 
 # Add CORS middleware for development
@@ -38,10 +37,8 @@ app.add_middleware(
 STATIC_DIR = Path(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)
 
-# Mount FastMCP server with Streamable HTTP transport
-# Streamable HTTP uses a single endpoint for bidirectional communication
-# The lifespan is already integrated above, so mounting just adds the routes
-app.mount("/mcp", mcp_app)
+# Mount MCP server at /mcp - endpoints will be accessible at /mcp/
+app.mount("/mcp", mcp_http_app)
 
 
 # UI and API Endpoints
