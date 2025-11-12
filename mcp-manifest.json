@@ -1,0 +1,84 @@
+{
+  "name": "openai-todo-app",
+  "version": "0.1.0",
+  "description": "A ToDo application with MCP (Model Context Protocol) support for OpenAI Apps SDK",
+  "author": "OpenAI Todo App Team",
+  "tools": [
+    {
+      "name": "create_todo",
+      "description": "Create a new todo item",
+      "endpoint": "/mcp/tools/create_todo",
+      "method": "POST",
+      "parameters": {
+        "title": {
+          "type": "string",
+          "description": "The title of the todo item",
+          "required": true
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the todo",
+          "required": false
+        },
+        "priority": {
+          "type": "string",
+          "description": "Priority level: low, medium, or high",
+          "enum": ["low", "medium", "high"],
+          "default": "medium",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "list_todos",
+      "description": "List all todo items with optional filtering",
+      "endpoint": "/mcp/tools/list_todos",
+      "method": "GET",
+      "parameters": {
+        "status": {
+          "type": "string",
+          "description": "Filter by status: pending, in_progress, or completed",
+          "enum": ["pending", "in_progress", "completed"],
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "update_todo",
+      "description": "Update an existing todo item",
+      "endpoint": "/mcp/tools/update_todo",
+      "method": "POST",
+      "parameters": {
+        "todo_id": {
+          "type": "string",
+          "description": "The ID of the todo to update",
+          "required": true
+        },
+        "status": {
+          "type": "string",
+          "description": "New status: pending, in_progress, or completed",
+          "enum": ["pending", "in_progress", "completed"],
+          "required": false
+        },
+        "title": {
+          "type": "string",
+          "description": "New title for the todo",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "get_stats",
+      "description": "Get statistics about all todos",
+      "endpoint": "/mcp/tools/get_stats",
+      "method": "GET",
+      "parameters": {}
+    }
+  ],
+  "ui": {
+    "type": "iframe",
+    "url": "/",
+    "width": 800,
+    "height": 600
+  }
+}
