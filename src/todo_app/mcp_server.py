@@ -124,10 +124,14 @@ def _tool_invocation_meta(widget: TodoWidget) -> Dict[str, Any]:
 
 
 def _get_todo_list_html() -> str:
-    """Generate HTML for todo list widget"""
+    """Generate interactive HTML for todo list widget"""
     todos = storage.list()
     todos_data = [todo.model_dump() for todo in todos]
     stats = storage.get_stats()
+
+    # Serialize todos data for JavaScript
+    import json
+    todos_json = json.dumps(todos_data)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -136,11 +140,13 @@ def _get_todo_list_html() -> str:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo App</title>
     <style>
+        * {{ box-sizing: border-box; }}
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 16px;
             background: white;
+            max-width: 100%;
         }}
         .header {{
             font-size: 24px;
@@ -150,6 +156,8 @@ def _get_todo_list_html() -> str:
             padding-bottom: 12px;
             border-bottom: 2px solid #e5e7eb;
         }}
+
+        /* Stats */
         .stats {{
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -173,12 +181,130 @@ def _get_todo_list_html() -> str:
             opacity: 0.9;
             text-transform: uppercase;
         }}
+
+        /* Add Todo Form */
+        .add-todo-section {{
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }}
+        .add-todo-title {{
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 12px;
+        }}
+        .form-group {{
+            margin-bottom: 12px;
+        }}
+        .form-label {{
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 4px;
+        }}
+        .form-input {{
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }}
+        .form-input:focus {{
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }}
+        .form-select {{
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }}
+        .btn {{
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+        .btn-primary {{
+            background: #667eea;
+            color: white;
+        }}
+        .btn-primary:hover {{
+            background: #5568d3;
+        }}
+        .btn-success {{
+            background: #10b981;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }}
+        .btn-success:hover {{
+            background: #059669;
+        }}
+        .btn-danger {{
+            background: #ef4444;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }}
+        .btn-danger:hover {{
+            background: #dc2626;
+        }}
+        .btn-secondary {{
+            background: #6b7280;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }}
+        .btn-secondary:hover {{
+            background: #4b5563;
+        }}
+
+        /* Filters */
+        .filters {{
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }}
+        .filter-btn {{
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+        .filter-btn.active {{
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }}
+        .filter-btn:hover {{
+            border-color: #667eea;
+        }}
+
+        /* Todo Items */
+        .todos {{
+            margin-top: 16px;
+        }}
         .todo-item {{
             padding: 12px;
             margin: 8px 0;
             background: #f9fafb;
             border-radius: 8px;
             border-left: 4px solid;
+            position: relative;
         }}
         .todo-item.priority-high {{
             border-left-color: #dc2626;
@@ -189,62 +315,362 @@ def _get_todo_list_html() -> str:
         .todo-item.priority-low {{
             border-left-color: #3b82f6;
         }}
+        .todo-item.status-completed .todo-title {{
+            text-decoration: line-through;
+            opacity: 0.6;
+        }}
+        .todo-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }}
         .todo-title {{
             font-weight: 600;
             color: #1f2937;
-            margin-bottom: 4px;
+            flex: 1;
+        }}
+        .todo-description {{
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 8px;
         }}
         .todo-meta {{
             font-size: 12px;
             color: #9ca3af;
+            margin-bottom: 8px;
+        }}
+        .todo-actions {{
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }}
         .empty {{
             text-align: center;
             padding: 40px;
             color: #9ca3af;
         }}
+
+        /* Edit Mode */
+        .edit-form {{
+            margin-top: 8px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+        }}
+        .edit-actions {{
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }}
+
+        /* Loading */
+        .loading {{
+            text-align: center;
+            color: #6b7280;
+            padding: 20px;
+        }}
     </style>
 </head>
 <body>
     <div class="header">📝 Your Todo App</div>
-    <div class="stats">
+
+    <div class="stats" id="stats">
         <div class="stat-card">
-            <div class="stat-number">{stats['total']}</div>
+            <div class="stat-number" id="stat-total">{stats['total']}</div>
             <div class="stat-label">Total</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{stats['pending']}</div>
+            <div class="stat-number" id="stat-pending">{stats['pending']}</div>
             <div class="stat-label">Pending</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{stats['in_progress']}</div>
+            <div class="stat-number" id="stat-progress">{stats['in_progress']}</div>
             <div class="stat-label">In Progress</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{stats['completed']}</div>
+            <div class="stat-number" id="stat-completed">{stats['completed']}</div>
             <div class="stat-label">Completed</div>
         </div>
     </div>
-    <div class="todos">
-        {''.join([f'''
-        <div class="todo-item priority-{todo["priority"]}">
-            <div class="todo-title">
-                {todo["status"] == "completed" and "✅" or (todo["status"] == "in_progress" and "⏳" or "📝")}
-                {todo["title"]}
+
+    <div class="add-todo-section">
+        <div class="add-todo-title">➕ Add New Todo</div>
+        <form id="addTodoForm" onsubmit="return false;">
+            <div class="form-group">
+                <label class="form-label">Title *</label>
+                <input type="text" class="form-input" id="newTodoTitle" placeholder="Enter todo title..." required>
             </div>
-            {f'<div style="color: #6b7280; margin: 4px 0;">{todo["description"]}</div>' if todo.get("description") else ""}
-            <div class="todo-meta">
-                Priority: {todo["priority"].upper()} • Status: {todo["status"].replace("_", " ").title()}
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <input type="text" class="form-input" id="newTodoDescription" placeholder="Enter description (optional)">
             </div>
-        </div>
-        ''' for todo in todos_data]) if todos_data else '<div class="empty">No todos yet! Create one to get started.</div>'}
+            <div class="form-group">
+                <label class="form-label">Priority</label>
+                <select class="form-select" id="newTodoPriority">
+                    <option value="low">🔵 Low</option>
+                    <option value="medium" selected>🟡 Medium</option>
+                    <option value="high">🔴 High</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="addTodo()">Add Todo</button>
+        </form>
     </div>
+
+    <div class="filters">
+        <button class="filter-btn active" onclick="filterTodos('all')">All</button>
+        <button class="filter-btn" onclick="filterTodos('pending')">Pending</button>
+        <button class="filter-btn" onclick="filterTodos('in_progress')">In Progress</button>
+        <button class="filter-btn" onclick="filterTodos('completed')">Completed</button>
+    </div>
+
+    <div class="todos" id="todoList"></div>
+
+    <script>
+        let todos = {todos_json};
+        let currentFilter = 'all';
+        let editingId = null;
+
+        // Get API base URL (relative to current page)
+        const API_BASE = window.location.origin + '/api';
+
+        // Render todos
+        function renderTodos() {{
+            const filtered = currentFilter === 'all'
+                ? todos
+                : todos.filter(t => t.status === currentFilter);
+
+            const container = document.getElementById('todoList');
+
+            if (filtered.length === 0) {{
+                container.innerHTML = '<div class="empty">No todos found. Create one above!</div>';
+                return;
+            }}
+
+            container.innerHTML = filtered.map(todo => `
+                <div class="todo-item priority-${{todo.priority}} status-${{todo.status}}" id="todo-${{todo.id}}">
+                    <div class="todo-header">
+                        <div class="todo-title">
+                            ${{getStatusIcon(todo.status)}} ${{todo.title}}
+                        </div>
+                    </div>
+                    ${{todo.description ? `<div class="todo-description">${{todo.description}}</div>` : ''}}
+                    <div class="todo-meta">
+                        Priority: ${{todo.priority.toUpperCase()}} • Status: ${{formatStatus(todo.status)}}
+                    </div>
+                    <div class="todo-actions">
+                        ${{todo.status !== 'in_progress' ? `<button class="btn btn-secondary" onclick="updateStatus('${{todo.id}}', 'in_progress')">⏳ In Progress</button>` : ''}}
+                        ${{todo.status !== 'completed' ? `<button class="btn btn-success" onclick="updateStatus('${{todo.id}}', 'completed')">✅ Complete</button>` : ''}}
+                        ${{todo.status !== 'pending' ? `<button class="btn btn-secondary" onclick="updateStatus('${{todo.id}}', 'pending')">📝 Reopen</button>` : ''}}
+                        <button class="btn btn-secondary" onclick="startEdit('${{todo.id}}')">✏️ Edit</button>
+                        <button class="btn btn-danger" onclick="deleteTodo('${{todo.id}}')">🗑️ Delete</button>
+                    </div>
+                    <div id="edit-${{todo.id}}"></div>
+                </div>
+            `).join('');
+        }}
+
+        function getStatusIcon(status) {{
+            if (status === 'completed') return '✅';
+            if (status === 'in_progress') return '⏳';
+            return '📝';
+        }}
+
+        function formatStatus(status) {{
+            return status.replace('_', ' ').split(' ').map(w =>
+                w.charAt(0).toUpperCase() + w.slice(1)
+            ).join(' ');
+        }}
+
+        // Filter todos
+        function filterTodos(filter) {{
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {{
+                btn.classList.remove('active');
+            }});
+            event.target.classList.add('active');
+            renderTodos();
+        }}
+
+        // Add todo
+        async function addTodo() {{
+            const title = document.getElementById('newTodoTitle').value.trim();
+            const description = document.getElementById('newTodoDescription').value.trim();
+            const priority = document.getElementById('newTodoPriority').value;
+
+            if (!title) {{
+                alert('Please enter a title');
+                return;
+            }}
+
+            try {{
+                const response = await fetch(`${{API_BASE}}/todos`, {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{ title, description, priority }})
+                }});
+
+                if (response.ok) {{
+                    const newTodo = await response.json();
+                    todos.push(newTodo);
+
+                    // Clear form
+                    document.getElementById('newTodoTitle').value = '';
+                    document.getElementById('newTodoDescription').value = '';
+                    document.getElementById('newTodoPriority').value = 'medium';
+
+                    await loadStats();
+                    renderTodos();
+                }} else {{
+                    alert('Error creating todo');
+                }}
+            }} catch (error) {{
+                console.error('Error:', error);
+                alert('Error creating todo');
+            }}
+        }}
+
+        // Update status
+        async function updateStatus(id, status) {{
+            try {{
+                const response = await fetch(`${{API_BASE}}/todos/${{id}}`, {{
+                    method: 'PATCH',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{ status }})
+                }});
+
+                if (response.ok) {{
+                    const updated = await response.json();
+                    todos = todos.map(t => t.id === id ? updated : t);
+                    await loadStats();
+                    renderTodos();
+                }} else {{
+                    alert('Error updating todo');
+                }}
+            }} catch (error) {{
+                console.error('Error:', error);
+                alert('Error updating todo');
+            }}
+        }}
+
+        // Delete todo
+        async function deleteTodo(id) {{
+            if (!confirm('Are you sure you want to delete this todo?')) {{
+                return;
+            }}
+
+            try {{
+                const response = await fetch(`${{API_BASE}}/todos/${{id}}`, {{
+                    method: 'DELETE'
+                }});
+
+                if (response.ok) {{
+                    todos = todos.filter(t => t.id !== id);
+                    await loadStats();
+                    renderTodos();
+                }} else {{
+                    alert('Error deleting todo');
+                }}
+            }} catch (error) {{
+                console.error('Error:', error);
+                alert('Error deleting todo');
+            }}
+        }}
+
+        // Start edit
+        function startEdit(id) {{
+            const todo = todos.find(t => t.id === id);
+            if (!todo) return;
+
+            editingId = id;
+            const editContainer = document.getElementById(`edit-${{id}}`);
+
+            editContainer.innerHTML = `
+                <div class="edit-form">
+                    <div class="form-group">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-input" id="edit-title-${{id}}" value="${{todo.title}}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-input" id="edit-desc-${{id}}" value="${{todo.description || ''}}">
+                    </div>
+                    <div class="edit-actions">
+                        <button class="btn btn-primary" onclick="saveEdit('${{id}}')">💾 Save</button>
+                        <button class="btn btn-secondary" onclick="cancelEdit('${{id}}')">❌ Cancel</button>
+                    </div>
+                </div>
+            `;
+        }}
+
+        // Save edit
+        async function saveEdit(id) {{
+            const title = document.getElementById(`edit-title-${{id}}`).value.trim();
+            const description = document.getElementById(`edit-desc-${{id}}`).value.trim();
+
+            if (!title) {{
+                alert('Title cannot be empty');
+                return;
+            }}
+
+            try {{
+                const response = await fetch(`${{API_BASE}}/todos/${{id}}`, {{
+                    method: 'PATCH',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{ title, description }})
+                }});
+
+                if (response.ok) {{
+                    const updated = await response.json();
+                    todos = todos.map(t => t.id === id ? updated : t);
+                    editingId = null;
+                    renderTodos();
+                }} else {{
+                    alert('Error updating todo');
+                }}
+            }} catch (error) {{
+                console.error('Error:', error);
+                alert('Error updating todo');
+            }}
+        }}
+
+        // Cancel edit
+        function cancelEdit(id) {{
+            editingId = null;
+            document.getElementById(`edit-${{id}}`).innerHTML = '';
+        }}
+
+        // Load stats
+        async function loadStats() {{
+            try {{
+                const response = await fetch(`${{API_BASE}}/stats`);
+                if (response.ok) {{
+                    const stats = await response.json();
+                    document.getElementById('stat-total').textContent = stats.total;
+                    document.getElementById('stat-pending').textContent = stats.pending;
+                    document.getElementById('stat-progress').textContent = stats.in_progress;
+                    document.getElementById('stat-completed').textContent = stats.completed;
+                }}
+            }} catch (error) {{
+                console.error('Error loading stats:', error);
+            }}
+        }}
+
+        // Initial render
+        renderTodos();
+
+        // Enable Enter key for add todo
+        document.getElementById('newTodoTitle').addEventListener('keypress', (e) => {{
+            if (e.key === 'Enter') addTodo();
+        }});
+    </script>
 </body>
 </html>"""
 
 
 def _get_stats_html() -> str:
-    """Generate HTML for stats widget"""
+    """Generate interactive HTML for stats widget"""
     stats = storage.get_stats()
 
     return f"""<!DOCTYPE html>
@@ -265,11 +691,28 @@ def _get_stats_html() -> str:
             font-weight: 700;
             margin-bottom: 20px;
             color: #111827;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+        .refresh-btn {{
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }}
+        .refresh-btn:hover {{
+            background: #5568d3;
         }}
         .stats-grid {{
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
+            margin-bottom: 20px;
         }}
         .stat-card {{
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -277,6 +720,10 @@ def _get_stats_html() -> str:
             padding: 24px;
             border-radius: 12px;
             text-align: center;
+            transition: transform 0.2s;
+        }}
+        .stat-card:hover {{
+            transform: translateY(-2px);
         }}
         .stat-number {{
             font-size: 48px;
@@ -289,28 +736,135 @@ def _get_stats_html() -> str:
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }}
+        .progress-bar {{
+            background: #f3f4f6;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }}
+        .progress-fill {{
+            background: linear-gradient(90deg, #10b981, #059669);
+            height: 100%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+        }}
+        .insights {{
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }}
+        .insight-title {{
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #374151;
+        }}
+        .insight-item {{
+            padding: 8px 0;
+            color: #6b7280;
+            font-size: 14px;
+        }}
     </style>
 </head>
 <body>
-    <div class="header">📊 Todo Statistics</div>
-    <div class="stats-grid">
+    <div class="header">
+        <span>📊 Todo Statistics</span>
+        <button class="refresh-btn" onclick="refreshStats()">🔄 Refresh</button>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
         <div class="stat-card">
-            <div class="stat-number">{stats['total']}</div>
+            <div class="stat-number" id="stat-total">{stats['total']}</div>
             <div class="stat-label">Total Todos</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{stats['pending']}</div>
+            <div class="stat-number" id="stat-pending">{stats['pending']}</div>
             <div class="stat-label">Pending</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{stats['in_progress']}</div>
+            <div class="stat-number" id="stat-progress">{stats['in_progress']}</div>
             <div class="stat-label">In Progress</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{stats['completed']}</div>
+            <div class="stat-number" id="stat-completed">{stats['completed']}</div>
             <div class="stat-label">Completed</div>
         </div>
     </div>
+
+    <div class="insights">
+        <div class="insight-title">Completion Progress</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar" style="width: {stats['completed'] / max(stats['total'], 1) * 100:.0f}%">
+                {stats['completed'] / max(stats['total'], 1) * 100:.0f}%
+            </div>
+        </div>
+
+        <div class="insight-title">Insights</div>
+        <div id="insights">
+            <div class="insight-item">
+                📝 {stats['pending']} task{'' if stats['pending'] == 1 else 's'} waiting to be started
+            </div>
+            <div class="insight-item">
+                ⏳ {stats['in_progress']} task{'' if stats['in_progress'] == 1 else 's'} currently in progress
+            </div>
+            <div class="insight-item">
+                ✅ {stats['completed']} task{'' if stats['completed'] == 1 else 's'} completed
+            </div>
+            {f'<div class="insight-item" style="color: #10b981; font-weight: 600;">🎉 All tasks completed!</div>' if stats['total'] > 0 and stats['completed'] == stats['total'] else ''}
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+
+        async function refreshStats() {{
+            try {{
+                const response = await fetch(`${{API_BASE}}/stats`);
+                if (!response.ok) throw new Error('Failed to fetch stats');
+
+                const stats = await response.json();
+
+                // Update stat numbers
+                document.getElementById('stat-total').textContent = stats.total;
+                document.getElementById('stat-pending').textContent = stats.pending;
+                document.getElementById('stat-progress').textContent = stats.in_progress;
+                document.getElementById('stat-completed').textContent = stats.completed;
+
+                // Update progress bar
+                const percentage = stats.total > 0 ? (stats.completed / stats.total * 100).toFixed(0) : 0;
+                const progressBar = document.getElementById('progressBar');
+                progressBar.style.width = percentage + '%';
+                progressBar.textContent = percentage + '%';
+
+                // Update insights
+                const insightsHtml = `
+                    <div class="insight-item">
+                        📝 ${{stats.pending}} task${{stats.pending === 1 ? '' : 's'}} waiting to be started
+                    </div>
+                    <div class="insight-item">
+                        ⏳ ${{stats.in_progress}} task${{stats.in_progress === 1 ? '' : 's'}} currently in progress
+                    </div>
+                    <div class="insight-item">
+                        ✅ ${{stats.completed}} task${{stats.completed === 1 ? '' : 's'}} completed
+                    </div>
+                    ${{stats.total > 0 && stats.completed === stats.total
+                        ? '<div class="insight-item" style="color: #10b981; font-weight: 600;">🎉 All tasks completed!</div>'
+                        : ''}}
+                `;
+                document.getElementById('insights').innerHTML = insightsHtml;
+
+            }} catch (error) {{
+                console.error('Error refreshing stats:', error);
+                alert('Error refreshing statistics');
+            }}
+        }}
+    </script>
 </body>
 </html>"""
 
