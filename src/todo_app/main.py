@@ -12,8 +12,9 @@ from .models import TodoItem, TodoCreate, TodoUpdate, TodoStatus
 from .storage import storage
 from .mcp_server import mcp
 
-# Create MCP ASGI app first (needed for lifespan)
-mcp_app = mcp.http_app(path="/")
+# Create MCP ASGI app with Streamable HTTP transport (for OpenAI Apps SDK)
+# http_app() now defaults to Streamable HTTP (modern MCP protocol, replaced SSE)
+mcp_app = mcp.http_app()
 
 # Create FastAPI app with MCP lifespan
 # This is required for proper task group initialization in FastMCP
@@ -37,7 +38,8 @@ app.add_middleware(
 STATIC_DIR = Path(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)
 
-# Mount FastMCP server (handles /mcp/* endpoints with proper MCP protocol)
+# Mount FastMCP server with Streamable HTTP transport
+# Streamable HTTP uses a single endpoint for bidirectional communication
 # The lifespan is already integrated above, so mounting just adds the routes
 app.mount("/mcp", mcp_app)
 
@@ -103,8 +105,9 @@ async def get_stats():
     return storage.get_stats()
 
 
-# Note: MCP endpoints (/mcp/*) are now handled by FastMCP automatically
-# The MCP server is mounted at /mcp and provides proper MCP protocol support
+# Note: MCP endpoints (/mcp/*) are handled by FastMCP with Streamable HTTP transport
+# Streamable HTTP is the modern MCP protocol (replaced SSE as of spec 2025-03-26)
+# The MCP server provides tool discovery and execution for OpenAI Apps SDK
 
 
 def get_html_content() -> str:
