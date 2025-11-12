@@ -4,6 +4,7 @@ from fastmcp import FastMCP
 from typing import Optional
 from .models import TodoCreate, TodoUpdate, TodoStatus
 from .storage import storage
+from .ui_components import create_todo_list_component, create_stats_component
 
 # Initialize FastMCP server
 mcp = FastMCP("OpenAI ToDo App")
@@ -43,23 +44,36 @@ def create_todo(
 
 
 @mcp.tool()
-def list_todos(status: Optional[str] = None) -> dict:
+def list_todos(status: Optional[str] = None, show_ui: bool = True) -> dict:
     """
-    List all todo items with optional status filter.
+    List all todo items with optional status filter and display them in a UI widget.
 
     Args:
         status: Optional filter by status - pending, in_progress, or completed
+        show_ui: Whether to show a visual UI component (default: True)
 
     Returns:
-        Dictionary with success status and list of todos
+        Dictionary with success status, list of todos, and optional UI component
     """
     try:
         todos = storage.list(status=TodoStatus(status) if status else None)
-        return {
+        todos_data = [todo.model_dump() for todo in todos]
+
+        result = {
             "success": True,
-            "todos": [todo.model_dump() for todo in todos],
+            "todos": todos_data,
             "count": len(todos)
         }
+
+        # Add UI component if requested
+        if show_ui:
+            filter_text = f" ({status.replace('_', ' ').title()})" if status else ""
+            result["ui"] = create_todo_list_component(
+                todos_data,
+                title=f"Your Todos{filter_text}"
+            )
+
+        return result
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -104,19 +118,28 @@ def update_todo(
 
 
 @mcp.tool()
-def get_stats() -> dict:
+def get_stats(show_ui: bool = True) -> dict:
     """
-    Get statistics about all todos.
+    Get statistics about all todos with a visual dashboard.
+
+    Args:
+        show_ui: Whether to show a visual UI component (default: True)
 
     Returns:
-        Dictionary with success status and statistics
+        Dictionary with success status, statistics, and optional UI component
     """
     try:
         stats = storage.get_stats()
-        return {
+        result = {
             "success": True,
             "stats": stats
         }
+
+        # Add UI component if requested
+        if show_ui:
+            result["ui"] = create_stats_component(stats)
+
+        return result
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -163,6 +186,35 @@ def get_todo(todo_id: str) -> dict:
         return {
             "success": True,
             "todo": todo.model_dump()
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@mcp.tool()
+def show_todo_app() -> dict:
+    """
+    Open the full todo app interface showing all your todos and statistics.
+
+    This displays a comprehensive UI widget with your complete todo list
+    and statistics dashboard.
+
+    Returns:
+        Dictionary with UI component displaying the full app
+    """
+    try:
+        # Get all todos and stats
+        todos = storage.list()
+        stats = storage.get_stats()
+        todos_data = [todo.model_dump() for todo in todos]
+
+        return {
+            "success": True,
+            "message": "Opening Todo App...",
+            "ui": create_todo_list_component(todos_data, title="📝 Your Todo App"),
+            "stats_ui": create_stats_component(stats),
+            "stats": stats,
+            "todo_count": len(todos_data)
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
