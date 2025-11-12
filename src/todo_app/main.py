@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .models import TodoItem, TodoCreate, TodoUpdate, TodoStatus
 from .storage import storage
+from .mcp_server import mcp
 
 # Create FastAPI app
 app = FastAPI(
@@ -31,8 +32,13 @@ app.add_middleware(
 STATIC_DIR = Path(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)
 
+# Mount FastMCP server (handles /mcp/* endpoints with proper MCP protocol)
+# Creates ASGI app from MCP server with Streamable HTTP transport
+mcp_app = mcp.http_app(path="/")
+app.mount("/mcp", mcp_app)
 
-# MCP Server Endpoints
+
+# UI and API Endpoints
 @app.get("/")
 async def root():
     """Root endpoint - serve the UI"""
@@ -93,166 +99,8 @@ async def get_stats():
     return storage.get_stats()
 
 
-# MCP Discovery and Manifest Endpoints
-@app.get("/mcp/")
-async def mcp_manifest():
-    """MCP Server Manifest - OpenAI Apps SDK discovery endpoint"""
-    return {
-        "name": "openai-todo-app",
-        "version": "0.1.0",
-        "description": "A ToDo application with MCP (Model Context Protocol) support for OpenAI Apps SDK",
-        "author": "OpenAI Todo App Team",
-        "tools": [
-            {
-                "name": "create_todo",
-                "description": "Create a new todo item with title, description, and priority",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "title": {
-                            "type": "string",
-                            "description": "The title of the todo item"
-                        },
-                        "description": {
-                            "type": "string",
-                            "description": "A detailed description of the todo",
-                            "default": ""
-                        },
-                        "priority": {
-                            "type": "string",
-                            "description": "Priority level: low, medium, or high",
-                            "enum": ["low", "medium", "high"],
-                            "default": "medium"
-                        }
-                    },
-                    "required": ["title"]
-                }
-            },
-            {
-                "name": "list_todos",
-                "description": "List all todo items with optional filtering by status",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "status": {
-                            "type": "string",
-                            "description": "Filter by status: pending, in_progress, or completed",
-                            "enum": ["pending", "in_progress", "completed"]
-                        }
-                    }
-                }
-            },
-            {
-                "name": "update_todo",
-                "description": "Update an existing todo item's status or title",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "todo_id": {
-                            "type": "string",
-                            "description": "The ID of the todo to update"
-                        },
-                        "status": {
-                            "type": "string",
-                            "description": "New status: pending, in_progress, or completed",
-                            "enum": ["pending", "in_progress", "completed"]
-                        },
-                        "title": {
-                            "type": "string",
-                            "description": "New title for the todo"
-                        }
-                    },
-                    "required": ["todo_id"]
-                }
-            },
-            {
-                "name": "get_stats",
-                "description": "Get statistics about all todos including total, pending, in progress, and completed counts",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {}
-                }
-            }
-        ]
-    }
-
-
-@app.get("/mcp/manifest")
-async def mcp_manifest_alt():
-    """Alternative MCP manifest endpoint"""
-    return await mcp_manifest()
-
-
-# MCP Tool Endpoints (for ChatGPT integration)
-@app.post("/mcp/tools/create_todo")
-async def mcp_create_todo(title: str, description: str = "", priority: str = "medium"):
-    """MCP Tool: Create a new todo item"""
-    try:
-        todo_create = TodoCreate(
-            title=title,
-            description=description if description else None,
-            priority=priority
-        )
-        todo = storage.create(todo_create)
-        return {
-            "success": True,
-            "todo": todo.model_dump(),
-            "message": f"Todo '{title}' created successfully!"
-        }
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
-@app.get("/mcp/tools/list_todos")
-async def mcp_list_todos(status: Optional[str] = None):
-    """MCP Tool: List all todos"""
-    try:
-        todos = storage.list(status=TodoStatus(status) if status else None)
-        return {
-            "success": True,
-            "todos": [todo.model_dump() for todo in todos],
-            "count": len(todos)
-        }
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
-@app.post("/mcp/tools/update_todo")
-async def mcp_update_todo(todo_id: str, status: Optional[str] = None, title: Optional[str] = None):
-    """MCP Tool: Update a todo item"""
-    try:
-        update_data = {}
-        if status:
-            update_data["status"] = TodoStatus(status)
-        if title:
-            update_data["title"] = title
-
-        todo_update = TodoUpdate(**update_data)
-        todo = storage.update(todo_id, todo_update)
-
-        if not todo:
-            return {"success": False, "error": "Todo not found"}
-
-        return {
-            "success": True,
-            "todo": todo.model_dump(),
-            "message": "Todo updated successfully!"
-        }
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
-@app.get("/mcp/tools/get_stats")
-async def mcp_get_stats():
-    """MCP Tool: Get todo statistics"""
-    try:
-        stats = storage.get_stats()
-        return {
-            "success": True,
-            "stats": stats
-        }
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+# Note: MCP endpoints (/mcp/*) are now handled by FastMCP automatically
+# The MCP server is mounted at /mcp and provides proper MCP protocol support
 
 
 def get_html_content() -> str:
