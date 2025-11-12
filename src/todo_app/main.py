@@ -12,9 +12,10 @@ from .models import TodoItem, TodoCreate, TodoUpdate, TodoStatus
 from .storage import storage
 from .mcp_server import mcp
 
-# Create MCP HTTP app with Streamable HTTP transport
+# Create MCP HTTP app with default 'http' transport
+# In FastMCP 2.x, 'http' is the modern Streamable HTTP protocol
 # Set path="/" so routes are at root of the mounted app
-mcp_http_app = mcp.http_app(path="/", transport="streamable-http")
+mcp_http_app = mcp.http_app(path="/")
 
 # Create main FastAPI app with MCP lifespan for proper task group initialization
 app = FastAPI(
