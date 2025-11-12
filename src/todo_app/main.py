@@ -93,6 +93,96 @@ async def get_stats():
     return storage.get_stats()
 
 
+# MCP Discovery and Manifest Endpoints
+@app.get("/mcp/")
+async def mcp_manifest():
+    """MCP Server Manifest - OpenAI Apps SDK discovery endpoint"""
+    return {
+        "name": "openai-todo-app",
+        "version": "0.1.0",
+        "description": "A ToDo application with MCP (Model Context Protocol) support for OpenAI Apps SDK",
+        "author": "OpenAI Todo App Team",
+        "tools": [
+            {
+                "name": "create_todo",
+                "description": "Create a new todo item with title, description, and priority",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the todo item"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "A detailed description of the todo",
+                            "default": ""
+                        },
+                        "priority": {
+                            "type": "string",
+                            "description": "Priority level: low, medium, or high",
+                            "enum": ["low", "medium", "high"],
+                            "default": "medium"
+                        }
+                    },
+                    "required": ["title"]
+                }
+            },
+            {
+                "name": "list_todos",
+                "description": "List all todo items with optional filtering by status",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "status": {
+                            "type": "string",
+                            "description": "Filter by status: pending, in_progress, or completed",
+                            "enum": ["pending", "in_progress", "completed"]
+                        }
+                    }
+                }
+            },
+            {
+                "name": "update_todo",
+                "description": "Update an existing todo item's status or title",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "todo_id": {
+                            "type": "string",
+                            "description": "The ID of the todo to update"
+                        },
+                        "status": {
+                            "type": "string",
+                            "description": "New status: pending, in_progress, or completed",
+                            "enum": ["pending", "in_progress", "completed"]
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "New title for the todo"
+                        }
+                    },
+                    "required": ["todo_id"]
+                }
+            },
+            {
+                "name": "get_stats",
+                "description": "Get statistics about all todos including total, pending, in progress, and completed counts",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                }
+            }
+        ]
+    }
+
+
+@app.get("/mcp/manifest")
+async def mcp_manifest_alt():
+    """Alternative MCP manifest endpoint"""
+    return await mcp_manifest()
+
+
 # MCP Tool Endpoints (for ChatGPT integration)
 @app.post("/mcp/tools/create_todo")
 async def mcp_create_todo(title: str, description: str = "", priority: str = "medium"):

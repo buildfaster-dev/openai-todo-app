@@ -150,3 +150,30 @@ def test_mcp_get_stats(client):
     data = response.json()
     assert data["success"] is True
     assert "stats" in data
+
+
+def test_mcp_manifest(client):
+    """Test MCP manifest endpoint"""
+    response = client.get("/mcp/")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "openai-todo-app"
+    assert data["version"] == "0.1.0"
+    assert "tools" in data
+    assert len(data["tools"]) == 4
+
+    # Verify tool names
+    tool_names = [tool["name"] for tool in data["tools"]]
+    assert "create_todo" in tool_names
+    assert "list_todos" in tool_names
+    assert "update_todo" in tool_names
+    assert "get_stats" in tool_names
+
+
+def test_mcp_manifest_alt(client):
+    """Test alternative MCP manifest endpoint"""
+    response = client.get("/mcp/manifest")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "openai-todo-app"
+    assert "tools" in data
