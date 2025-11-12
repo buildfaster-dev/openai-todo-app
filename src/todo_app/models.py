@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 
 
@@ -22,18 +22,8 @@ class TodoPriority(str, Enum):
 
 class TodoItem(BaseModel):
     """A single todo item"""
-    id: str = Field(..., description="Unique identifier for the todo item")
-    title: str = Field(..., description="Title of the todo item")
-    description: Optional[str] = Field(None, description="Detailed description")
-    status: TodoStatus = Field(default=TodoStatus.PENDING, description="Current status")
-    priority: TodoPriority = Field(default=TodoPriority.MEDIUM, description="Priority level")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, description="Last update timestamp")
-    due_date: Optional[datetime] = Field(None, description="Due date for the todo")
-    tags: list[str] = Field(default_factory=list, description="Tags associated with the todo")
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "1",
                 "title": "Build OpenAI App",
@@ -43,6 +33,17 @@ class TodoItem(BaseModel):
                 "tags": ["development", "openai"]
             }
         }
+    )
+
+    id: str = Field(..., description="Unique identifier for the todo item")
+    title: str = Field(..., description="Title of the todo item")
+    description: Optional[str] = Field(None, description="Detailed description")
+    status: TodoStatus = Field(default=TodoStatus.PENDING, description="Current status")
+    priority: TodoPriority = Field(default=TodoPriority.MEDIUM, description="Priority level")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
+    updated_at: datetime = Field(default_factory=datetime.utcnow, description="Last update timestamp")
+    due_date: Optional[datetime] = Field(None, description="Due date for the todo")
+    tags: list[str] = Field(default_factory=list, description="Tags associated with the todo")
 
 
 class TodoCreate(BaseModel):
