@@ -75,12 +75,42 @@ Cada tutorial sigue la metodología **Diataxis** para documentación:
 
 ## Prerrequisitos para Todos los Tutoriales
 
-### Software
+### Opción 1: Con Nix (Recomendado) ⭐
+
+Si usas Nix, solo necesitas:
+- **[Nix con flakes habilitados](https://nixos.org/download.html)**
+- **Editor de código** (VS Code recomendado)
+- **Cuenta en [ngrok](https://ngrok.com)** (gratuita)
+
+Nix te proporcionará automáticamente:
+- ✅ Python 3.11
+- ✅ uv (gestor de paquetes)
+- ✅ just (command runner)
+- ✅ ngrok
+- ✅ git y curl
+
+**Setup rápido**:
+```bash
+# Habilitar flakes
+mkdir -p ~/.config/nix
+echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
+
+# Clonar proyecto y entrar al entorno
+git clone <url-del-repositorio>
+cd openai-todo-app
+nix develop
+```
+
+### Opción 2: Instalación Manual
+
+Si prefieres no usar Nix:
 - Python 3.10 o superior
 - Git
 - Editor de código (VS Code recomendado)
 - Terminal (bash/zsh)
 - Cuenta en ngrok (gratuita)
+- [uv](https://docs.astral.sh/uv/) - Gestor de paquetes Python
+- [just](https://github.com/casey/just) - Command runner
 
 ### Conocimientos
 - Python básico (funciones, clases)

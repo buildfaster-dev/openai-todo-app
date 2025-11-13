@@ -18,38 +18,67 @@ En este tutorial, aprenderás a construir una aplicación de notas (notes app) c
 
 ## Prerrequisitos
 
-Antes de comenzar, asegúrate de tener instalado:
+### Opción 1: Con Nix (Recomendado) ⭐
 
+Si usas el entorno Nix del proyecto openai-todo-app:
+- **[Nix con flakes habilitados](https://nixos.org/download.html)**
+- **Editor de código** (VS Code, PyCharm, etc.)
+- **Cuenta en [ngrok](https://ngrok.com)** (gratuita)
+
+Nix te proporcionará Python 3.11, uv, just, y todas las herramientas necesarias.
+
+### Opción 2: Instalación Manual
+
+Si prefieres instalar las herramientas manualmente:
 - Python 3.11 o superior
-- Un editor de código (VS Code, PyCharm, etc.)
-- Una terminal
+- [uv](https://docs.astral.sh/uv/) - Gestor de paquetes Python
+- Editor de código (VS Code, PyCharm, etc.)
+- Terminal
 - Cuenta en ngrok (gratuita)
 
 ## Paso 1: Configurar el Entorno
 
 Primero, vamos a crear un nuevo proyecto y configurar el entorno Python.
 
-### 1.1 Crear el directorio del proyecto
+### Opción A: Con Nix ⭐
+
+Si estás usando Nix desde el proyecto openai-todo-app:
+
+```bash
+# 1. Asegúrate de estar en el entorno Nix
+cd /ruta/a/openai-todo-app
+nix develop
+
+# 2. Crear el directorio del proyecto dentro
+mkdir my-notes-app
+cd my-notes-app
+```
+
+Las herramientas (Python, uv) ya están disponibles. Salta a la sección 1.4.
+
+### Opción B: Instalación Manual
+
+#### 1.1 Crear el directorio del proyecto
 
 ```bash
 mkdir my-notes-app
 cd my-notes-app
 ```
 
-### 1.2 Instalar uv (gestor de paquetes Python)
+#### 1.2 Instalar uv (gestor de paquetes Python)
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### 1.3 Crear el entorno virtual
+#### 1.3 Crear el entorno virtual
 
 ```bash
 uv venv
 source .venv/bin/activate  # En Windows: .venv\Scripts\activate
 ```
 
-### 1.4 Crear pyproject.toml
+### 1.4 Crear pyproject.toml (Ambas opciones)
 
 Crea un archivo `pyproject.toml` con este contenido:
 

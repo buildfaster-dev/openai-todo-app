@@ -19,11 +19,23 @@ En este tutorial, aprenderás a trabajar con la **OpenAI ToDo App**, una aplicac
 
 ## Prerrequisitos
 
-### Software Requerido
+### Opción 1: Con Nix (Recomendado) ⭐
 
+**Software Requerido**:
+- **[Nix con flakes habilitados](https://nixos.org/download.html)**
+- **Editor de código** (VS Code recomendado)
+- **Cuenta en ngrok** (gratuita) - [ngrok.com](https://ngrok.com)
+
+Con Nix obtendrás automáticamente Python 3.11, uv, just, ngrok y todas las herramientas necesarias.
+
+### Opción 2: Instalación Manual
+
+**Software Requerido**:
 - **Python 3.10 o superior**
 - **Git** (para clonar el repositorio)
 - **Editor de código** (VS Code recomendado)
+- **[uv](https://docs.astral.sh/uv/)** - Gestor de paquetes Python
+- **[just](https://github.com/casey/just)** - Command runner
 - **Cuenta en ngrok** (gratuita) - [ngrok.com](https://ngrok.com)
 - **Terminal** (bash, zsh, o similar)
 
@@ -64,10 +76,38 @@ Verás:
 
 **🎓 Aprendiste**: La estructura típica de un proyecto Python con OpenAI Apps SDK.
 
-### Paso 2: Instalar uv (Gestor de Paquetes)
+### Paso 2: Configurar el Entorno de Desarrollo
 
-Este proyecto usa **uv**, un gestor de paquetes Python moderno y rápido.
+#### Opción A: Con Nix (Recomendado) ⭐
 
+Si instalaste Nix, configurar el entorno es muy simple:
+
+```bash
+# 1. Habilitar flakes (solo primera vez)
+mkdir -p ~/.config/nix
+echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
+
+# 2. Entrar al entorno de desarrollo
+cd openai-todo-app
+nix develop
+```
+
+¡Listo! Nix descargará y configurará automáticamente:
+- ✅ Python 3.11
+- ✅ uv (gestor de paquetes)
+- ✅ just (command runner)
+- ✅ ngrok
+- ✅ git, curl
+
+**🎓 Aprendiste**: Cómo usar Nix para entornos completamente reproducibles.
+
+Salta al **Paso 3** cuando veas el mensaje de bienvenida del shell.
+
+#### Opción B: Instalación Manual
+
+Si prefieres no usar Nix, instala las herramientas manualmente:
+
+**1. Instalar uv** (gestor de paquetes Python):
 ```bash
 # En Linux/macOS
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -76,11 +116,17 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv --version
 ```
 
-**¿Por qué uv?**
-- 10-100x más rápido que pip
-- Gestión automática de virtual environments
-- Lock files para reproducibilidad
-- Manejo mejor de dependencias
+**2. Instalar just** (command runner):
+```bash
+# En Linux/macOS con Homebrew
+brew install just
+
+# O descarga desde: https://github.com/casey/just
+```
+
+**¿Por qué estas herramientas?**
+- **uv**: 10-100x más rápido que pip, gestión automática de venvs
+- **just**: Simplifica comandos comunes del proyecto
 
 **🎓 Aprendiste**: Herramientas modernas del ecosistema Python.
 
