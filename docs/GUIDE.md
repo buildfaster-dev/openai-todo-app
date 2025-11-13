@@ -19,6 +19,100 @@
 
 ## Configuración y Setup
 
+### Cómo configurar el entorno de desarrollo con Nix
+
+**Problema**: Quieres un entorno de desarrollo reproducible sin instalar herramientas manualmente.
+
+**Solución (Recomendada)** - Usar Nix con flakes:
+
+1. **Instala Nix** (si aún no lo tienes):
+
+```bash
+# En Linux/macOS/WSL
+sh <(curl -L https://nixos.org/nix/install) --daemon
+```
+
+2. **Habilita flakes** (característica experimental):
+
+```bash
+mkdir -p ~/.config/nix
+echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
+```
+
+3. **Entra al entorno de desarrollo**:
+
+```bash
+cd openai-todo-app
+nix develop
+```
+
+Esto te proporciona automáticamente:
+- ✅ Python 3.11
+- ✅ uv (gestor de paquetes Python)
+- ✅ just (command runner)
+- ✅ ngrok (para tunneling)
+- ✅ git y curl
+
+4. **Instala las dependencias del proyecto**:
+
+```bash
+just install
+```
+
+5. **Inicia el servidor de desarrollo**:
+
+```bash
+just dev
+```
+
+**Ventajas de Nix**:
+- **Reproducible**: Todos usan exactamente las mismas versiones
+- **Aislado**: No interfiere con tu sistema
+- **Declarativo**: Todo está definido en `flake.nix`
+- **Multi-plataforma**: Funciona igual en Linux, macOS y WSL
+- **Cacheable**: La primera vez descarga, después es instantáneo
+
+**Para salir del entorno Nix**:
+```bash
+exit  # O Ctrl+D
+```
+
+**Para volver a entrar**:
+```bash
+nix develop
+```
+
+### Cómo usar direnv con Nix (Opcional pero recomendado)
+
+**Problema**: Quieres que el entorno Nix se active automáticamente al entrar al directorio.
+
+**Solución**:
+
+1. Instala direnv:
+
+```bash
+# En Linux/macOS con Homebrew
+brew install direnv
+
+# O con tu gestor de paquetes
+```
+
+2. Agrega a tu shell (`.bashrc`, `.zshrc`, etc.):
+
+```bash
+eval "$(direnv hook bash)"  # Para bash
+eval "$(direnv hook zsh)"   # Para zsh
+```
+
+3. Crea `.envrc` en el directorio del proyecto:
+
+```bash
+echo "use flake" > .envrc
+direnv allow
+```
+
+Ahora, cada vez que entres al directorio, el entorno Nix se activará automáticamente.
+
 ### Cómo configurar variables de entorno
 
 **Problema**: Necesitas configurar variables de entorno para tu aplicación.
@@ -85,20 +179,25 @@ if __name__ == "__main__":
 
 **Solución**:
 
-1. Instala uv:
+**Si usas Nix**: uv ya está disponible en el entorno de desarrollo (`nix develop`). Salta al paso 2.
+
+**Si no usas Nix**: Instala uv manualmente:
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-2. Crea un proyecto nuevo:
+**Uso de uv**:
+
+1. En este proyecto, las dependencias ya están configuradas en `pyproject.toml`.
+
+2. Para instalar las dependencias del proyecto:
 
 ```bash
-uv init mi-proyecto
-cd mi-proyecto
+uv sync  # O usa: just install
 ```
 
-3. Agrega dependencias:
+3. Para agregar nuevas dependencias al proyecto:
 
 ```bash
 # Dependencias de producción
@@ -108,13 +207,7 @@ uv add fastapi uvicorn pydantic "mcp[fastapi]"
 uv add --dev pytest pytest-asyncio httpx
 ```
 
-4. Sincroniza el entorno:
-
-```bash
-uv sync
-```
-
-5. Ejecuta comandos en el entorno:
+4. Ejecuta comandos en el entorno virtual:
 
 ```bash
 uv run python mi_script.py

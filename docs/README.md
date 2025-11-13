@@ -83,11 +83,62 @@ Los tutoriales están en la carpeta `tutorials/`:
 
 Ver [tutorials/README.md](./tutorials/README.md) para más detalles.
 
+## 🔧 Setup del Entorno de Desarrollo
+
+Este proyecto utiliza **Nix con flakes** para proporcionar un entorno de desarrollo completamente reproducible. Esto garantiza que todos los desarrolladores trabajen con las mismas versiones de herramientas y dependencias.
+
+### Opción 1: Setup con Nix (Recomendado) ⭐
+
+**Prerrequisitos**: [Instalar Nix con soporte para flakes](https://nixos.org/download.html)
+
+```bash
+# Habilitar flakes (si aún no lo has hecho)
+mkdir -p ~/.config/nix
+echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
+
+# Entrar al entorno de desarrollo
+nix develop
+
+# El shell te mostrará las versiones instaladas:
+# - Python 3.11
+# - uv (gestor de paquetes)
+# - just (command runner)
+# - ngrok (tunneling)
+```
+
+**Beneficios de usar Nix**:
+- ✅ Entorno completamente reproducible
+- ✅ Sin conflictos con instalaciones del sistema
+- ✅ Todas las herramientas en las versiones correctas
+- ✅ Setup instantáneo (después de la primera vez)
+- ✅ Funciona igual en Linux, macOS y WSL
+
+**Siguiente paso**: Una vez en el shell de Nix, ejecuta:
+```bash
+just install  # Instala las dependencias Python
+just dev      # Inicia el servidor de desarrollo
+```
+
+### Opción 2: Setup Manual
+
+Si prefieres no usar Nix, necesitas instalar manualmente:
+
+- Python 3.11 o superior
+- [uv](https://docs.astral.sh/uv/) - Gestor de paquetes Python
+- [just](https://github.com/casey/just) - Command runner
+- [ngrok](https://ngrok.com/) - Para exponer tu servidor local
+
+Ver instrucciones detalladas en [GUIDE.md § Configuración y Setup](./GUIDE.md#configuración-y-setup).
+
+---
+
 ## 🗺️ Rutas de Aprendizaje
 
 ### Para Principiantes
 
 ```
+0. Setup con Nix (5 minutos)
+   ↓
 1. tutorials/todo-app-tutorial.md
    ↓ (familiarízate con la app)
 2. EXPLANATION.md

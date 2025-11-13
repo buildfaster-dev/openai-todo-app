@@ -924,6 +924,152 @@ Python es una elección excelente para MCP porque:
 
 **El protocolo MCP es agnóstico al lenguaje** - puedes usar cualquiera. Pero Python ofrece la mejor combinación de productividad, safety y soporte oficial para la mayoría de aplicaciones MCP.
 
+### ¿Por qué Nix para Entornos Reproducibles?
+
+Este proyecto incluye un `flake.nix` para proporcionar un entorno de desarrollo completamente reproducible. Esto resuelve uno de los problemas más comunes en desarrollo Python: **"funciona en mi máquina"**.
+
+#### El Problema de Entornos No Reproducibles
+
+**Escenario típico sin Nix**:
+```bash
+# Desarrollador A (macOS, Python 3.11, uv 0.1.0)
+uv add fastapi
+# Todo funciona
+
+# Desarrollador B (Ubuntu, Python 3.10, sin uv)
+pip install fastapi
+# Versión diferente, dependencias diferentes, problemas sutiles
+```
+
+**Problemas comunes**:
+- Diferentes versiones de Python entre desarrolladores
+- Herramientas instaladas globalmente vs en el proyecto
+- Dependencias del sistema (librerías C) faltantes o en versiones diferentes
+- Configuración manual que se olvida documentar
+
+#### La Solución: Nix Flakes
+
+**flake.nix define TODO el entorno**:
+```nix
+{
+  devShells.default = pkgs.mkShell {
+    buildInputs = with pkgs; [
+      python311      # Python 3.11 exacto, no "cualquier 3.11.x"
+      uv             # uv en versión específica
+      just           # Command runner
+      ngrok          # Para tunneling
+      git
+      curl
+    ];
+
+    shellHook = ''
+      echo "🚀 OpenAI ToDo App Development Environment"
+      echo "Python:  $(python --version)"
+      echo "uv:      $(uv --version)"
+    '';
+  };
+}
+```
+
+**Beneficios**:
+
+**1. Reproducibilidad Bit-a-Bit**
+```bash
+# Cualquier desarrollador, cualquier máquina
+nix develop
+# Resultado: Exactamente el mismo entorno
+```
+
+Nix descarga las mismas versiones binarias de nixpkgs, garantizando:
+- Python 3.11 idéntico en todos los sistemas
+- Misma versión de uv, just, ngrok
+- Mismas librerías del sistema
+
+**2. Aislamiento Completo**
+```bash
+# Fuera del entorno Nix
+$ python --version
+Python 3.8.10  # Tu Python del sistema
+
+# Dentro del entorno Nix
+$ nix develop
+$ python --version
+Python 3.11.x  # Python del proyecto, aislado
+```
+
+Nix no modifica tu sistema. El entorno es completamente aislado.
+
+**3. Declarativo y Versionado**
+```nix
+# Todo en git, todo reproducible
+git clone <repo>
+nix develop  # Listo para desarrollar
+```
+
+No hay "instalación manual" ni "pasos de setup olvidados". Todo está en `flake.nix`.
+
+**4. Multi-plataforma**
+```bash
+# Mismo comando, diferentes OS
+nix develop  # Linux
+nix develop  # macOS
+nix develop  # WSL
+# Mismo resultado en todos
+```
+
+#### Integración con uv y Python venv
+
+Nix y uv se complementan perfectamente:
+
+- **Nix proporciona**: Python, uv, herramientas del sistema
+- **uv gestiona**: Dependencias Python del proyecto (en .venv)
+
+```bash
+# Workflow típico
+nix develop           # Entra al entorno Nix
+just install          # uv crea .venv e instala deps Python
+just dev              # Ejecuta el servidor
+```
+
+**¿Por qué no solo uv?**
+
+uv gestiona paquetes Python, pero no:
+- La versión de Python misma
+- Herramientas como just, ngrok
+- Librerías del sistema (si tu proyecto necesita PostgreSQL, libffi, etc.)
+
+**¿Por qué no solo Nix?**
+
+Nix podría gestionar también las dependencias Python, pero:
+- El ecosistema Python usa pyproject.toml como estándar
+- uv es más rápido para dependencias Python
+- Mejor integración con herramientas de Python (pytest, ruff, etc.)
+
+La combinación **Nix + uv** da lo mejor de ambos mundos.
+
+#### Alternativas y Cuándo Usar Nix
+
+**Alternativas a Nix**:
+- **Docker**: Más pesado, requiere daemon, no tan integrado
+- **asdf/pyenv**: Solo versiones de Python, no resto de herramientas
+- **conda**: Ecosistema propio, no tan reproducible
+- **Devbox**: Built on Nix, más amigable pero menos flexible
+
+**✅ Usa Nix si**:
+- Quieres máxima reproducibilidad
+- Trabajas en equipo
+- Necesitas herramientas más allá de Python
+- Quieres documentación ejecutable del entorno
+- Quieres CI/CD idéntico a local
+
+**❌ Skip Nix si**:
+- Proyecto personal simple
+- Ya tienes un workflow que funciona
+- No puedes instalar Nix (restricciones corporativas)
+- Equipo no quiere aprender Nix
+
+**Para proyectos MCP de producción**: Nix es altamente recomendado por la reproducibilidad y el aislamiento que proporciona.
+
 ### ¿Por qué Almacenamiento en Memoria?
 
 El proyecto base usa un diccionario Python:
