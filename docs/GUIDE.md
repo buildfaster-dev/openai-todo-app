@@ -1,8 +1,9 @@
-# Guía de Referencia: OpenAI Apps SDK
+# Guía de Referencia: OpenAI Apps SDK con Python
 
 > **Tipo de documento**: How-to Guide (Task-oriented)
-> **Objetivo**: Resolver problemas específicos y realizar tareas concretas
-> **Audiencia**: Desarrolladores que ya tienen conocimientos básicos del SDK
+> **Objetivo**: Resolver problemas específicos y realizar tareas concretas usando Python
+> **Lenguaje**: Python 3.10+
+> **Audiencia**: Desarrolladores Python que ya tienen conocimientos básicos del SDK
 
 ## Tabla de Contenidos
 
@@ -78,36 +79,53 @@ if __name__ == "__main__":
     uvicorn.run("src.notes_app.main:app", host="0.0.0.0", port=8080, reload=True)
 ```
 
-### Cómo usar Nix para un entorno reproducible
+### Cómo usar uv para gestión de dependencias Python
 
-**Problema**: Quieres un entorno de desarrollo reproducible.
+**Problema**: Quieres gestionar dependencias Python de forma rápida y confiable.
 
 **Solución**:
 
-1. Crea un archivo `shell.nix`:
-
-```nix
-{ pkgs ? import <nixpkgs> {} }:
-
-pkgs.mkShell {
-  buildInputs = with pkgs; [
-    python311
-    uv
-    ngrok
-  ];
-
-  shellHook = ''
-    echo "OpenAI Apps SDK environment loaded"
-    export PYTHONPATH="$PWD:$PYTHONPATH"
-  '';
-}
-```
-
-2. Entra al entorno:
+1. Instala uv:
 
 ```bash
-nix-shell
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
+2. Crea un proyecto nuevo:
+
+```bash
+uv init mi-proyecto
+cd mi-proyecto
+```
+
+3. Agrega dependencias:
+
+```bash
+# Dependencias de producción
+uv add fastapi uvicorn pydantic "mcp[fastapi]"
+
+# Dependencias de desarrollo
+uv add --dev pytest pytest-asyncio httpx
+```
+
+4. Sincroniza el entorno:
+
+```bash
+uv sync
+```
+
+5. Ejecuta comandos en el entorno:
+
+```bash
+uv run python mi_script.py
+uv run pytest
+```
+
+**¿Por qué uv?**
+- 10-100x más rápido que pip
+- Lock files automáticos (uv.lock)
+- Gestión automática de virtual environments
+- Compatible con pyproject.toml estándar
 
 ---
 
@@ -1107,11 +1125,29 @@ class MyInput(BaseModel):
 
 ## Recursos Adicionales
 
-- [Ejemplos oficiales de OpenAI](https://github.com/openai/openai-apps-sdk-examples)
-- [Especificación MCP](https://modelcontextprotocol.io/specification)
-- [Documentación de FastMCP](https://github.com/modelcontextprotocol/python-sdk)
-- [Guía de Pydantic](https://docs.pydantic.dev/latest/)
+### Documentación Python Específica
+- [Pydantic v2 Documentation](https://docs.pydantic.dev/) - Validación de datos en Python
+- [FastAPI Documentation](https://fastapi.tiangolo.com/) - Framework web ASGI
+- [uvicorn Documentation](https://www.uvicorn.org/) - Servidor ASGI
+- [uv Documentation](https://docs.astral.sh/uv/) - Gestor de paquetes Python
+- [pytest Documentation](https://docs.pytest.org/) - Framework de testing
+
+### MCP y OpenAI Apps SDK
+- [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) - SDK oficial de MCP para Python
+- [MCP Specification](https://modelcontextprotocol.io/specification) - Especificación del protocolo
+- [OpenAI Apps SDK Examples](https://github.com/openai/openai-apps-sdk-examples) - Ejemplos oficiales
+- [OpenAI Apps SDK Docs](https://developers.openai.com/apps-sdk/) - Documentación oficial
+
+### Herramientas Python
+- [typing Documentation](https://docs.python.org/3/library/typing.html) - Type hints en Python
+- [asyncio Documentation](https://docs.python.org/3/library/asyncio.html) - Programación asíncrona
+- [SQLAlchemy](https://www.sqlalchemy.org/) - ORM para Python
+- [Alembic](https://alembic.sqlalchemy.org/) - Migraciones de base de datos
 
 ---
 
-**¿No encuentras lo que buscas?** Consulta el documento de Explanation (`EXPLANATION.md`) para entender conceptos más profundos, o el Tutorial (`TUTORIAL.md`) para un recorrido paso a paso.
+**¿No encuentras lo que buscas?**
+
+- Consulta `EXPLANATION.md` para entender conceptos profundos sobre la arquitectura Python
+- Ve los tutoriales en `tutorials/` para recorridos paso a paso
+- Revisa el código fuente en `src/todo_app/` para ejemplos reales de implementación Python
