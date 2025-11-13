@@ -59,25 +59,29 @@ Este proyecto sigue el [framework Diataxis](https://diataxis.fr/) para organizar
 
 **Ideal para**: Consulta rápida cuando necesitas hacer algo específico.
 
+## 📦 Documentación Adicional del Proyecto
+
+Además de esta documentación técnica, el proyecto incluye:
+
 ### 3. Tutoriales - Aprendizaje 📝
 
-Los tutoriales están en `../tutorials/`:
+Los tutoriales están en la carpeta `tutorials/`:
 
-#### [ToDo App Tutorial](../tutorials/todo-app-tutorial.md) ⭐
+#### [ToDo App Tutorial](./tutorials/todo-app-tutorial.md) ⭐
 - **Nivel**: Principiante a Intermedio
 - **Tiempo**: 90-120 minutos
 - Explora y extiende la aplicación existente
 - 20 pasos progresivos con checkpoints
 - Incluye extensión y testing
 
-#### [Notes App Tutorial](../tutorials/notes-app-tutorial.md)
+#### [Notes App Tutorial](./tutorials/notes-app-tutorial.md)
 - **Nivel**: Principiante
 - **Tiempo**: 60-90 minutos
 - Construye una aplicación desde cero
 - 10 pasos fundamentales
 - Enfoque en conceptos básicos
 
-Ver [tutorials/README.md](../tutorials/README.md) para más detalles.
+Ver [tutorials/README.md](./tutorials/README.md) para más detalles.
 
 ## 🗺️ Rutas de Aprendizaje
 
@@ -125,10 +129,10 @@ Ver [tutorials/README.md](../tutorials/README.md) para más detalles.
 → Lee [EXPLANATION.md](./EXPLANATION.md)
 
 **...aprender haciendo desde cero**
-→ Sigue [tutorials/notes-app-tutorial.md](../tutorials/notes-app-tutorial.md)
+→ Sigue [tutorials/notes-app-tutorial.md](./tutorials/notes-app-tutorial.md)
 
 **...explorar una app completa**
-→ Sigue [tutorials/todo-app-tutorial.md](../tutorials/todo-app-tutorial.md)
+→ Sigue [tutorials/todo-app-tutorial.md](./tutorials/todo-app-tutorial.md)
 
 **...resolver un problema específico**
 → Consulta [GUIDE.md](./GUIDE.md)
@@ -249,7 +253,7 @@ Por favor:
 
 **¿Por dónde empezar?**
 
-Si es tu primera vez: [tutorials/todo-app-tutorial.md](../tutorials/todo-app-tutorial.md)
+Si es tu primera vez: [tutorials/todo-app-tutorial.md](./tutorials/todo-app-tutorial.md)
 
 Si quieres entender: [EXPLANATION.md](./EXPLANATION.md)
 

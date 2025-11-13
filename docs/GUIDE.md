@@ -1148,6 +1148,6 @@ class MyInput(BaseModel):
 
 **¿No encuentras lo que buscas?**
 
-- Consulta `EXPLANATION.md` para entender conceptos profundos sobre la arquitectura Python
-- Ve los tutoriales en `tutorials/` para recorridos paso a paso
-- Revisa el código fuente en `src/todo_app/` para ejemplos reales de implementación Python
+- Consulta [EXPLANATION.md](./EXPLANATION.md) para entender conceptos profundos sobre la arquitectura Python
+- Ve los tutoriales en [tutorials/](./tutorials/) para recorridos paso a paso
+- Revisa el código fuente en `../src/todo_app/` para ejemplos reales de implementación Python
