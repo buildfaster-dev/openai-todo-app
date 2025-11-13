@@ -172,7 +172,46 @@ just tunnel  # o: ngrok http 8000
 
 Copia la URL HTTPS de ngrok (ej: `https://abc123.ngrok-free.dev`)
 
-### 2. Configurar en OpenAI Platform
+### 2. Configurar PUBLIC_URL (CRÍTICO para widgets interactivos)
+
+**⚠️ IMPORTANTE**: Para que los botones del widget funcionen en ChatGPT (crear, editar, eliminar, cambiar estado), debes configurar la variable `PUBLIC_URL` en el archivo `.env`:
+
+```bash
+# .env
+PUBLIC_URL=https://tu-url-de-ngrok.ngrok-free.dev
+HOST=0.0.0.0
+PORT=8000
+```
+
+**¿Por qué es necesario?**
+
+Los widgets HTML se renderizan en el dominio de OpenAI (chat.openai.com), no en tu servidor. Si usamos `window.location.origin` en JavaScript, apuntaría a OpenAI en lugar de tu API. Por eso, inyectamos la URL pública del servidor directamente en el HTML del widget.
+
+**Pasos**:
+
+1. Copia tu URL HTTPS de ngrok (sin `/mcp` al final)
+2. Actualiza `PUBLIC_URL` en `.env`
+3. Reinicia el servidor para cargar la nueva configuración:
+   ```bash
+   # Detén el servidor (Ctrl+C) y vuelve a iniciarlo
+   just dev
+   ```
+
+**Ejemplo completo**:
+```bash
+# Tu ngrok muestra: https://abc123.ngrok-free.dev
+# Configura en .env:
+PUBLIC_URL=https://abc123.ngrok-free.dev
+
+# NO incluyas /mcp, /api, ni rutas adicionales
+# Solo el dominio base
+```
+
+Los widgets ahora usarán `https://abc123.ngrok-free.dev/api` para todas las operaciones CRUD.
+
+**Nota**: Cada vez que reinicies ngrok (si usas cuenta gratuita), obtendrás una nueva URL y deberás repetir estos pasos.
+
+### 3. Configurar en OpenAI Platform
 
 1. Ve a https://platform.openai.com/apps
 2. Crea o actualiza tu app
@@ -180,7 +219,7 @@ Copia la URL HTTPS de ngrok (ej: `https://abc123.ngrok-free.dev`)
    - URL: `https://YOUR-NGROK-URL/mcp`
    - Asegúrate que OpenAI envíe ambos headers Accept
 
-### 3. Probar en ChatGPT
+### 4. Probar en ChatGPT
 
 Una vez configurado, puedes usar comandos como:
 
@@ -189,6 +228,28 @@ Una vez configurado, puedes usar comandos como:
 - "What are my stats?" → Llama `show_todo_stats`, muestra dashboard
 - "List my pending todos" → Llama `list_todos` con filtro
 - "Mark todo X as completed" → Llama `update_todo`
+
+#### Funcionalidad del Widget Interactivo
+
+Con `PUBLIC_URL` correctamente configurado, el widget de la aplicación incluye:
+
+**✅ Botones Funcionales**:
+- **Crear Todo**: Formulario completo con título, descripción, prioridad y tags
+- **Editar**: Modificar cualquier campo inline
+- **Cambiar Estado**: Botones para "In Progress" y "Complete"
+- **Eliminar**: Con confirmación de seguridad
+- **Filtros**: Ver todos, pendientes, en progreso, completados
+
+**✅ Actualizaciones en Tiempo Real**:
+- Estadísticas se actualizan automáticamente
+- Lista se refresca después de cada operación
+- Sin necesidad de recargar el widget
+
+**✅ Diseño Responsivo**:
+- Prioridades con código de colores (🔴 Alta, 🟡 Media, 🔵 Baja)
+- Tags visuales
+- Timestamps relativos ("hace 2 horas")
+- Interfaz limpia y moderna
 
 ## Diferencias vs FastMCP
 
@@ -213,6 +274,35 @@ src/todo_app/
 ```
 
 ## Troubleshooting
+
+### Botones del widget no funcionan en ChatGPT
+
+**Síntoma**: El widget se muestra pero los botones (crear, editar, eliminar, cambiar estado) no hacen nada.
+
+**Causa**: `PUBLIC_URL` no está configurado o apunta a URL incorrecta.
+
+**Solución**:
+1. Verifica que `.env` existe y tiene `PUBLIC_URL` configurado
+2. Asegúrate que `PUBLIC_URL` usa la URL HTTPS de ngrok (sin rutas adicionales)
+3. Reinicia el servidor después de cambiar `.env`:
+   ```bash
+   # Detén el servidor (Ctrl+C)
+   just dev
+   ```
+4. Abre la consola del navegador (F12) en ChatGPT y busca errores de CORS o conexión
+5. Verifica que ngrok está corriendo y accesible
+
+**Ejemplo correcto**:
+```bash
+PUBLIC_URL=https://abc123.ngrok-free.dev  # ✅ Correcto
+```
+
+**Ejemplos incorrectos**:
+```bash
+PUBLIC_URL=http://localhost:8000          # ❌ No accesible desde ChatGPT
+PUBLIC_URL=https://abc123.ngrok-free.dev/mcp  # ❌ No incluir rutas
+PUBLIC_URL=abc123.ngrok-free.dev          # ❌ Falta https://
+```
 
 ### Widget no se muestra en ChatGPT
 
