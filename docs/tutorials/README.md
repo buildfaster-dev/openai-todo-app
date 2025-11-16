@@ -20,21 +20,47 @@ Este tutorial te enseña a:
 
 **Ideal para**: Aprender con una aplicación funcional que puedes explorar, modificar y extender.
 
-### 2. [Tutorial de Notes App](./notes-app-tutorial.md)
+### 2. [Tutorial de Notes App](./notes-app-tutorial.md) 🆕 ¡MEJORADO!
 
 **Nivel**: Principiante
-**Tiempo**: 60-90 minutos
-**Tipo**: Construcción desde cero
+**Tiempo**: 2-3 horas (dividido en 2 partes)
+**Tipo**: Construcción desde cero con enfoque evolutivo
 
-Este tutorial te enseña a:
-- ✅ Crear un proyecto Python desde cero
-- ✅ Configurar entorno con uv
-- ✅ Implementar modelos con Pydantic
-- ✅ Crear servidor MCP básico
-- ✅ Definir herramientas y recursos
-- ✅ Agregar widgets HTML
+**NUEVO**: Este tutorial ha sido completamente renovado con:
+- 📚 **Explicaciones paso a paso** de cada archivo
+- 🎯 **Enfoque evolutivo** para widgets (simple → complejo)
+- 🔧 **Node.js incluido** en configuración Nix
+- 💡 **Comentarios explicativos** en cada sección
+- 📖 **Dos partes** para mejor organización
 
-**Ideal para**: Entender cada paso del proceso de construcción desde el inicio.
+**Parte 1** ([notes-app-tutorial.md](./notes-app-tutorial.md)) te enseña a:
+- ✅ Entender qué es MCP y cómo funciona
+- ✅ Crear entorno reproducible con Nix (paso a paso)
+- ✅ Configurar `flake.nix` con explicaciones detalladas
+- ✅ Crear `justfile`, `pyproject.toml` paso a paso
+- ✅ Implementar modelos Pydantic con explicaciones
+- ✅ Crear capa de almacenamiento CRUD
+- ✅ Implementar servidor MCP básico (sin widgets)
+- ✅ Configurar `main.py` y archivos `.env`
+
+**Parte 2** ([notes-app-tutorial-part2.md](./notes-app-tutorial-part2.md)) te enseña a:
+- ✅ Crear widgets evolutivamente en 5 versiones:
+  - Versión 1: HTML estático (fundamentos)
+  - Versión 2: Datos dinámicos (integración)
+  - Versión 3: Estilos CSS (diseño)
+  - Versión 4: Interactividad básica (window.openai)
+  - Versión 5: Versión final pulida (UX completa)
+- ✅ Usar la API `window.openai` para llamar herramientas
+- ✅ Implementar resource handlers
+- ✅ Crear múltiples widgets
+
+**Ideal para**:
+- Aprender construyendo desde cero con explicaciones profundas
+- Entender el "por qué" de cada decisión de diseño
+- Ver la evolución de código simple a complejo
+- Desarrolladores que prefieren aprender paso a paso
+
+**Ver**: [Tutorial README](./README-notes-tutorial.md) para guía completa de uso
 
 ## ¿Cuál tutorial elegir?
 
