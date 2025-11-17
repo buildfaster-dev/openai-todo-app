@@ -1385,6 +1385,15 @@ if __name__ == "__main__":
 
 ## Parte 4: Probando Localmente
 
+**⚠️ Prerequisitos:**
+Antes de continuar con esta sección, asegúrate de haber completado la **Parte 3 completa**:
+- ✅ Estructura de carpetas creada (sección 3.1): `src/helloworld_app/`
+- ✅ Archivo `__init__.py` creado (sección 3.2)
+- ✅ Archivo `mcp_server.py` creado (sección 3.3)
+- ✅ Archivo `main.py` creado (sección 3.4)
+
+Si ejecutas `just dev` sin estos archivos, obtendrás el error: `ModuleNotFoundError: No module named 'src'`
+
 ### 4.1 Iniciar el Servidor
 
 ```bash
