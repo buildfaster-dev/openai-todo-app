@@ -169,8 +169,8 @@ EOF
 
 ```bash
 # Create project directory
-mkdir my-notes-app
-cd my-notes-app
+mkdir openai-notes-app
+cd openai-notes-app
 
 # Initialize git
 git init
@@ -601,14 +601,15 @@ Create `justfile` with initialization commands:
 python := "python3.11"
 
 # Initialize the project
-# This creates a virtual environment for Python dependencies
+# This creates a virtual environment and installs all dependencies
 init:
     @echo "📦 Initializing project..."
     uv venv
     @echo "✅ Virtual environment created"
-    @echo "Run: source .venv/bin/activate"
+    @echo "📦 Installing dependencies..."
+    uv sync --all-extras
 
-# Install dependencies
+# Install dependencies (same as init but without creating venv)
 # This installs all packages defined in pyproject.toml, including dev dependencies
 install:
     @echo "📦 Installing dependencies..."
@@ -616,8 +617,8 @@ install:
 ```
 
 **What these do:**
-- `init`: Creates a Python virtual environment using `uv`
-- `install`: Installs project dependencies from `pyproject.toml`
+- `init`: Creates a Python virtual environment using `uv` and installs all dependencies
+- `install`: Installs or updates project dependencies from `pyproject.toml`
 
 **Step 2: Add Development Server Commands**
 
@@ -725,7 +726,8 @@ init:
     @echo "📦 Initializing project..."
     uv venv
     @echo "✅ Virtual environment created"
-    @echo "Run: source .venv/bin/activate"
+    @echo "📦 Installing dependencies..."
+    uv sync --all-extras
 
 # Install dependencies
 install:
@@ -865,7 +867,7 @@ Expected output:
 Python: /nix/store/.../bin/python
 Python version: Python 3.11.x
 uv version: uv x.x.x
-Working directory: /path/to/my-notes-app
+Working directory: /path/to/openai-notes-app
 ```
 
 ✅ **Checkpoint**: You should see your environment information.
@@ -873,24 +875,20 @@ Working directory: /path/to/my-notes-app
 **Step 2: Initialize and install dependencies**
 
 ```bash
-# Create virtual environment
+# Create virtual environment and install dependencies
 just init
-
-# Activate it
-source .venv/bin/activate
-
-# Install all dependencies
-just install
 ```
 
-Expected output from `just install`:
+Expected output from `just init`:
 ```
+📦 Initializing project...
+✅ Virtual environment created
 📦 Installing dependencies...
 Resolved XX packages in XXms
 Installed XX packages in XXms
 ```
 
-✅ **Checkpoint**: All dependencies should install without errors.
+✅ **Checkpoint**: Virtual environment created and all dependencies should install without errors.
 
 **Step 3: Start the development server**
 
@@ -901,7 +899,7 @@ just dev
 Expected output:
 ```
 🚀 Starting development server...
-INFO:     Will watch for changes in these directories: ['/path/to/my-notes-app']
+INFO:     Will watch for changes in these directories: ['/path/to/openai-notes-app']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process [XXXXX] using WatchFiles
 INFO:     Started server process [XXXXX]
@@ -927,8 +925,8 @@ Press `Ctrl+C` in the terminal where the server is running.
 | Command | Status | Purpose |
 |---------|--------|---------|
 | `just info` | ✅ Works now | Shows environment information |
-| `just init` | ✅ Works now | Creates Python virtual environment |
-| `just install` | ✅ Works now | Installs all packages (including dev dependencies) |
+| `just init` | ✅ Works now | Creates virtual environment and installs all dependencies |
+| `just install` | ✅ Works now | Installs/updates packages (including dev dependencies) |
 | `just dev` | ✅ Works now | Starts FastAPI server on http://localhost:8000 |
 | `just test` | ⏳ Works but no tests yet | Runs pytest tests |
 | `just format` | ✅ Works now | Auto-formats Python files |
@@ -976,7 +974,7 @@ If you haven't done these steps, go back to **Part 2, Section 2.10** and complet
 ```bash
 # Check that you're in the virtual environment
 which python
-# Should show: /path/to/my-notes-app/.venv/bin/python
+# Should show: /path/to/openai-notes-app/.venv/bin/python
 
 # Check that dependencies are installed
 uv run pytest --version
