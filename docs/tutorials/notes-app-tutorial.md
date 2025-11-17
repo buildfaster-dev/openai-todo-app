@@ -413,7 +413,182 @@ You should see the welcome message with all tools available.
 - How to configure unfree packages
 - How to add helpful shell hooks
 
-### 2.7 Create the Justfile - Step by Step
+### 2.7 Create pyproject.toml - Step by Step
+
+The `pyproject.toml` file defines your Python project configuration and dependencies. Let's build it section by section:
+
+**Step 1: Project Metadata**
+
+Create `pyproject.toml` with basic project information:
+
+```toml
+[project]
+name = "notes-app"
+version = "0.1.0"
+description = "A notes application with MCP integration for ChatGPT"
+requires-python = ">=3.11"
+```
+
+**What this does:**
+- `name`: Your project's name (used when installing)
+- `version`: Current version number
+- `description`: Brief description of the project
+- `requires-python`: Minimum Python version required
+
+**Step 2: Core Dependencies**
+
+Add the main dependencies your app needs:
+
+```toml
+dependencies = [
+    "fastapi>=0.115.0",      # Web framework for building APIs
+    "uvicorn[standard]>=0.32.0",  # ASGI server to run FastAPI
+    "mcp[fastapi]>=0.1.0",   # Model Context Protocol library
+    "pydantic>=2.9.0",       # Data validation using type hints
+    "python-dotenv>=1.0.0",  # Load environment variables from .env file
+]
+```
+
+**What each dependency does:**
+- **fastapi**: Modern web framework for building APIs with automatic OpenAPI documentation
+- **uvicorn**: Lightning-fast ASGI server to run your FastAPI app
+- **mcp[fastapi]**: Official MCP library with FastAPI integration
+- **pydantic**: Data validation using Python type hints (required by FastAPI)
+- **python-dotenv**: Loads configuration from `.env` files
+
+**Step 3: Development Dependencies**
+
+Add dependencies needed only during development:
+
+```toml
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",         # Testing framework
+    "pytest-asyncio>=0.24.0", # Async support for pytest
+    "httpx>=0.27.0",         # HTTP client for testing FastAPI
+    "ruff>=0.6.0",           # Fast Python linter and formatter
+]
+```
+
+**What each dev dependency does:**
+- **pytest**: Python testing framework
+- **pytest-asyncio**: Plugin to test async functions
+- **httpx**: HTTP client to test FastAPI endpoints
+- **ruff**: Fast linter and formatter (replaces black, isort, flake8)
+
+**Step 4: Build System**
+
+Define how to build your package:
+
+```toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+```
+
+**What this does:**
+- Specifies that we use `hatchling` to build the package
+- Modern build backend (alternative to setuptools)
+
+**Step 5: Hatchling Build Configuration**
+
+Configure hatchling to find your package:
+
+```toml
+[tool.hatch.build.targets.wheel]
+packages = ["src/notes_app"]  # Tell hatchling where to find the package
+```
+
+**What this does:**
+- `packages`: Specifies the directory path to your Python package
+- This fixes the "Unable to determine which files to ship" error
+- Required because our package is in `src/notes_app` instead of the project root
+
+**Step 6: Pytest Configuration**
+
+Configure pytest behavior:
+
+```toml
+[tool.pytest.ini_options]
+asyncio_mode = "auto"  # Automatically detect and run async tests
+testpaths = ["tests"]  # Where to find test files
+```
+
+**What this does:**
+- `asyncio_mode = "auto"`: Pytest automatically handles async tests
+- `testpaths`: Tells pytest where to look for tests
+
+**Step 7: Ruff Configuration**
+
+Configure the linter and formatter:
+
+```toml
+[tool.ruff]
+line-length = 100      # Maximum line length
+target-version = "py311"  # Python version to target
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]  # Which rules to enable
+ignore = ["E501"]      # Which rules to ignore
+```
+
+**What this does:**
+- `line-length`: Maximum characters per line (100 is a good balance)
+- `target-version`: Python version for compatibility checks
+- `select`: Enable specific rule categories (E=errors, F=pyflakes, I=isort, N=naming, W=warnings)
+- `ignore`: Disable specific rules (E501 = line too long, since we set line-length)
+
+**Complete pyproject.toml:**
+
+```toml
+[project]
+name = "notes-app"
+version = "0.1.0"
+description = "A notes application with MCP integration for ChatGPT"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "mcp[fastapi]>=0.1.0",
+    "pydantic>=2.9.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.27.0",
+    "ruff>=0.6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/notes_app"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
+```
+
+🎓 **You learned**:
+- How to structure a Python project with pyproject.toml
+- What each dependency does and why we need it
+- How to configure testing and linting tools
+- How to fix the "Unable to determine which files to ship" error
+
+### 2.8 Create the Justfile - Step by Step
 
 The `justfile` contains shortcuts for common development tasks. Let's build it gradually:
 
@@ -434,10 +609,10 @@ init:
     @echo "Run: source .venv/bin/activate"
 
 # Install dependencies
-# This installs all packages defined in pyproject.toml
+# This installs all packages defined in pyproject.toml, including dev dependencies
 install:
     @echo "📦 Installing dependencies..."
-    uv sync
+    uv sync --all-extras
 ```
 
 **What these do:**
@@ -555,7 +730,7 @@ init:
 # Install dependencies
 install:
     @echo "📦 Installing dependencies..."
-    uv sync
+    uv sync --all-extras
 
 # Start development server
 dev:
@@ -610,196 +785,207 @@ info:
 - What each command does and when to use it
 - How to structure commands with explanations
 
----
+### 2.9 Create a Minimal main.py
 
-## Part 3: Building the MCP Server
+Before we can test the development server, we need a minimal `main.py` file. Don't worry about understanding all the details yet - we'll expand this file with full MCP functionality in Part 3.
 
-### 3.1 Create Project Structure
+**Why we're doing this now**: This allows us to test that our development environment is working correctly before diving into the MCP implementation.
+
+Create the file structure:
 
 ```bash
-# Create source directories
+# Create the source directory if it doesn't exist
 mkdir -p src/notes_app
-touch src/notes_app/__init__.py
 
-# Create tests directory
-mkdir -p tests
-touch tests/__init__.py
-
-# Create docs
-mkdir -p docs
+# Create the main.py file
+touch src/notes_app/main.py
 ```
 
-### 3.2 Create pyproject.toml - Step by Step
+Now add this minimal FastAPI application to `src/notes_app/main.py`:
 
-The `pyproject.toml` file defines your Python project configuration and dependencies. Let's build it section by section:
+```python
+"""Minimal FastAPI application for testing the development environment.
 
-**Step 1: Project Metadata**
+This is a starter file that we'll expand with MCP functionality in Part 3.
+"""
 
-Create `pyproject.toml` with basic project information:
+from fastapi import FastAPI
 
-```toml
-[project]
-name = "notes-app"
-version = "0.1.0"
-description = "A notes application with MCP integration for ChatGPT"
-requires-python = ">=3.11"
-```
+# Create FastAPI application
+app = FastAPI(
+    title="Notes App",
+    description="A notes application with MCP integration",
+    version="0.1.0"
+)
 
-**What this does:**
-- `name`: Your project's name (used when installing)
-- `version`: Current version number
-- `description`: Brief description of the project
-- `requires-python`: Minimum Python version required
 
-**Step 2: Core Dependencies**
+@app.get("/")
+async def root():
+    """Health check endpoint"""
+    return {
+        "status": "ok",
+        "message": "Notes App is running",
+        "version": "0.1.0"
+    }
 
-Add the main dependencies your app needs:
 
-```toml
-dependencies = [
-    "fastapi>=0.115.0",      # Web framework for building APIs
-    "uvicorn[standard]>=0.32.0",  # ASGI server to run FastAPI
-    "mcp[fastapi]>=0.1.0",   # Model Context Protocol library
-    "pydantic>=2.9.0",       # Data validation using type hints
-    "python-dotenv>=1.0.0",  # Load environment variables from .env file
-]
-```
-
-**What each dependency does:**
-- **fastapi**: Modern web framework for building APIs with automatic OpenAPI documentation
-- **uvicorn**: Lightning-fast ASGI server to run your FastAPI app
-- **mcp[fastapi]**: Official MCP library with FastAPI integration
-- **pydantic**: Data validation using Python type hints (required by FastAPI)
-- **python-dotenv**: Loads configuration from `.env` files
-
-**Step 3: Development Dependencies**
-
-Add dependencies needed only during development:
-
-```toml
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.3.0",         # Testing framework
-    "pytest-asyncio>=0.24.0", # Async support for pytest
-    "httpx>=0.27.0",         # HTTP client for testing FastAPI
-    "ruff>=0.6.0",           # Fast Python linter and formatter
-]
-```
-
-**What each dev dependency does:**
-- **pytest**: Python testing framework
-- **pytest-asyncio**: Plugin to test async functions
-- **httpx**: HTTP client to test FastAPI endpoints
-- **ruff**: Fast linter and formatter (replaces black, isort, flake8)
-
-**Step 4: Build System**
-
-Define how to build your package:
-
-```toml
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+@app.get("/health")
+async def health():
+    """Health check endpoint for monitoring"""
+    return {"status": "healthy"}
 ```
 
 **What this does:**
-- Specifies that we use `hatchling` to build the package
-- Modern build backend (alternative to setuptools)
+- **FastAPI app**: Creates a basic web application
+- **root endpoint (`/`)**: Returns a welcome message
+- **health endpoint (`/health`)**: Simple health check for monitoring
+- **This is temporary**: We'll add MCP functionality in Part 3
 
-**Step 5: Pytest Configuration**
+✅ **Checkpoint**: The file should be created at `src/notes_app/main.py`
 
-Configure pytest behavior:
+🎓 **You learned**:
+- How to create a minimal FastAPI application
+- Basic FastAPI endpoint structure
+- The importance of health check endpoints
 
-```toml
-[tool.pytest.ini_options]
-asyncio_mode = "auto"  # Automatically detect and run async tests
-testpaths = ["tests"]  # Where to find test files
-```
+### 2.10 Testing the Development Environment
 
-**What this does:**
-- `asyncio_mode = "auto"`: Pytest automatically handles async tests
-- `testpaths`: Tells pytest where to look for tests
+Now let's verify that our development environment is working correctly. We'll test several commands to ensure everything is set up properly.
 
-**Step 6: Ruff Configuration**
-
-Configure the linter and formatter:
-
-```toml
-[tool.ruff]
-line-length = 100      # Maximum line length
-target-version = "py311"  # Python version to target
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "N", "W"]  # Which rules to enable
-ignore = ["E501"]      # Which rules to ignore
-```
-
-**What this does:**
-- `line-length`: Maximum characters per line (100 is a good balance)
-- `target-version`: Python version for compatibility checks
-- `select`: Enable specific rule categories (E=errors, F=pyflakes, I=isort, N=naming, W=warnings)
-- `ignore`: Disable specific rules (E501 = line too long, since we set line-length)
-
-**Complete pyproject.toml:**
-
-```toml
-[project]
-name = "notes-app"
-version = "0.1.0"
-description = "A notes application with MCP integration for ChatGPT"
-requires-python = ">=3.11"
-dependencies = [
-    "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.32.0",
-    "mcp[fastapi]>=0.1.0",
-    "pydantic>=2.9.0",
-    "python-dotenv>=1.0.0",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.3.0",
-    "pytest-asyncio>=0.24.0",
-    "httpx>=0.27.0",
-    "ruff>=0.6.0",
-]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
-
-[tool.ruff]
-line-length = 100
-target-version = "py311"
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "N", "W"]
-ignore = ["E501"]
-```
-
-### 3.3 Install Dependencies
+**Step 1: Test the info command**
 
 ```bash
-# Initialize virtual environment
+just info
+```
+
+Expected output:
+```
+📊 Environment Information
+━━━━━━━━━━━━━━━━━━━━━━━━
+Python: /nix/store/.../bin/python
+Python version: Python 3.11.x
+uv version: uv x.x.x
+Working directory: /path/to/my-notes-app
+```
+
+✅ **Checkpoint**: You should see your environment information.
+
+**Step 2: Initialize and install dependencies**
+
+```bash
+# Create virtual environment
 just init
+
+# Activate it
 source .venv/bin/activate
 
 # Install all dependencies
 just install
 ```
 
-✅ **Checkpoint**: You should see all dependencies installed without errors.
+Expected output from `just install`:
+```
+📦 Installing dependencies...
+Resolved XX packages in XXms
+Installed XX packages in XXms
+```
 
-🎓 **You learned**:
-- How to structure a Python project with pyproject.toml
-- What each dependency does and why we need it
-- How to configure testing and linting tools
+✅ **Checkpoint**: All dependencies should install without errors.
 
-### 3.4 Create Data Models - Step by Step
+**Step 3: Start the development server**
+
+```bash
+just dev
+```
+
+Expected output:
+```
+🚀 Starting development server...
+INFO:     Will watch for changes in these directories: ['/path/to/my-notes-app']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [XXXXX] using WatchFiles
+INFO:     Started server process [XXXXX]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+```
+
+✅ **Checkpoint**: The server should start without errors!
+
+**Step 4: Test the server in your browser**
+
+Open your browser and visit:
+- http://localhost:8000 - You should see: `{"status": "ok", "message": "Notes App is running", "version": "0.1.0"}`
+- http://localhost:8000/health - You should see: `{"status": "healthy"}`
+- http://localhost:8000/docs - You should see the FastAPI automatic documentation
+
+**Step 5: Stop the server**
+
+Press `Ctrl+C` in the terminal where the server is running.
+
+**Command Availability Summary:**
+
+| Command | Status | Purpose |
+|---------|--------|---------|
+| `just info` | ✅ Works now | Shows environment information |
+| `just init` | ✅ Works now | Creates Python virtual environment |
+| `just install` | ✅ Works now | Installs all packages (including dev dependencies) |
+| `just dev` | ✅ Works now | Starts FastAPI server on http://localhost:8000 |
+| `just test` | ⏳ Works but no tests yet | Runs pytest tests |
+| `just format` | ✅ Works now | Auto-formats Python files |
+| `just lint` | ✅ Works now | Checks code quality |
+| `just clean` | ✅ Works now | Removes temporary files |
+| `just inspect` | ⏳ Part 3 (after MCP server) | Opens MCP Inspector to test tools |
+| `just tunnel` | ⏳ Part 6 | Exposes server to internet for ChatGPT |
+
+**What's Next:**
+
+In Part 3, we'll expand `main.py` to include:
+- MCP server integration
+- Data models for notes
+- Storage layer
+- MCP tools (create_note, list_notes, etc.)
+- Interactive widgets
+
+✅ **For now**: You have a working development environment with a running FastAPI server!
+
+---
+
+## Part 3: Building the MCP Server
+
+Now that we have a working development environment with a minimal FastAPI server, let's build the complete MCP (Model Context Protocol) server with notes functionality.
+
+**What we'll build in Part 3:**
+1. Data models (Note, NoteCreate, NoteUpdate, NoteStats)
+2. Storage layer (in-memory database)
+3. Expand main.py with MCP server integration
+4. MCP tools (create_note, list_notes, update_note, delete_note)
+5. REST API endpoints
+
+### 3.1 Verify Your Setup
+
+Before we begin, make sure you completed Part 2 and have:
+
+✅ Virtual environment activated (you should see `(.venv)` in your terminal)
+✅ Dependencies installed (ran `just install`)
+✅ Development server working (tested `just dev`)
+
+If you haven't done these steps, go back to **Part 2, Section 2.10** and complete them.
+
+**Quick verification:**
+
+```bash
+# Check that you're in the virtual environment
+which python
+# Should show: /path/to/my-notes-app/.venv/bin/python
+
+# Check that dependencies are installed
+uv run pytest --version
+uv run ruff --version
+```
+
+If all checks pass, you're ready to continue! 🚀
+
+### 3.2 Create Data Models - Step by Step
 
 Data models define the structure of your data. Let's build `src/notes_app/models.py` gradually:
 
@@ -977,7 +1163,7 @@ class NoteStats(BaseModel):
 - How to use Field for validation and documentation
 - How to use Optional for nullable fields
 
-### 3.5 Create Storage Layer - Step by Step
+### 3.3 Create Storage Layer - Step by Step
 
 The storage layer handles data persistence. We'll use in-memory storage for simplicity. Create `src/notes_app/storage.py`:
 
@@ -1333,9 +1519,11 @@ storage = NotesStorage()
 - How to use Python dictionaries for in-memory storage
 - How to calculate statistics from stored data
 
-### 3.6 Create the MCP Server - Understanding the Architecture
+### 3.4 Expand main.py with MCP Server
 
-Before diving into code, let's understand the MCP server architecture:
+Now we'll transform our minimal `main.py` into a complete MCP server. Remember, we already created a basic version in Part 2 - now we're going to expand it with full MCP functionality.
+
+**Before diving into code**, let's understand the MCP server architecture:
 
 ```
 MCP Server Components:
@@ -1372,11 +1560,19 @@ Let's build this step by step. Due to the complexity, we'll break it into manage
 - Storage layer with CRUD operations
 - Each file explained step by step with clear comments
 
-The tutorial continues with:
-- Part 3.6: MCP Server (simplified and explained)
+🎓 **What you've learned so far**:
+- Part 2: Complete development environment setup (Nix, pyproject.toml, justfile, minimal main.py)
+- Part 3.1: Verified your setup
+- Part 3.2: Created data models with Pydantic
+- Part 3.3: Implemented storage layer with CRUD operations
+- Part 3.4: Understanding MCP server architecture (current section)
+
+**The tutorial continues with:**
+- Part 3.4 continued: Complete MCP server implementation
+- Part 3.5: Creating mcp_server.py with tools and resources
 - Part 4: Testing with MCP Inspector
-- Part 5: **Creating Interactive Widgets (EVOLUTIONARY APPROACH - simple to complex)**
+- Part 5: Creating Interactive Widgets (EVOLUTIONARY APPROACH - simple to complex)
 - Part 6: Connecting to ChatGPT
 - Part 7: Production Deployment
 
-Would you like me to continue with the MCP server section and especially the evolutionary widget creation?
+**Next steps:** We need to complete the MCP server implementation in section 3.4 and create the mcp_server.py file in section 3.5.
