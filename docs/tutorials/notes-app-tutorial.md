@@ -609,10 +609,10 @@ init:
     @echo "Run: source .venv/bin/activate"
 
 # Install dependencies
-# This installs all packages defined in pyproject.toml
+# This installs all packages defined in pyproject.toml, including dev dependencies
 install:
     @echo "📦 Installing dependencies..."
-    uv sync
+    uv sync --all-extras
 ```
 
 **What these do:**
@@ -730,7 +730,7 @@ init:
 # Install dependencies
 install:
     @echo "📦 Installing dependencies..."
-    uv sync
+    uv sync --all-extras
 
 # Start development server
 dev:
@@ -787,7 +787,9 @@ info:
 
 ### 2.9 Testing the Justfile Commands
 
-Let's verify that all justfile commands work correctly. You don't need to complete all these steps now (we haven't created the source code yet), but here's how each command will be used:
+Let's verify that all justfile commands work correctly.
+
+⚠️ **Important**: At this point in the tutorial, **only `just info` will work**. The other commands require source code files that we'll create in Part 3.
 
 **Test the info command** (works now):
 ```bash
@@ -804,44 +806,32 @@ uv version: uv x.x.x
 Working directory: /path/to/my-notes-app
 ```
 
-**How to use other commands** (later in the tutorial):
+✅ **Checkpoint**: If `just info` works, you're ready to continue!
 
-1. **Initialize project**: `just init`
-   - Creates Python virtual environment
-   - Run once at project start
+**Commands you'll use later in the tutorial:**
 
-2. **Install dependencies**: `just install`
-   - Installs all packages from pyproject.toml
-   - Run after modifying dependencies
+| Command | When Available | Purpose |
+|---------|---------------|---------|
+| `just init` | **Part 3, Section 3.2** | Creates Python virtual environment |
+| `just install` | **Part 3, Section 3.2** | Installs all packages (including dev dependencies) |
+| `just test` | **After install** | Runs pytest tests (once tests exist) |
+| `just dev` | **After creating main.py** | Starts FastAPI server on http://localhost:8000 |
+| `just inspect` | **After dev server running** | Opens MCP Inspector to test tools |
+| `just tunnel` | **Part 6** | Exposes server to internet for ChatGPT |
+| `just format` | **Anytime after install** | Auto-formats Python files |
+| `just lint` | **Anytime after install** | Checks code quality |
+| `just clean` | **Anytime** | Removes temporary files |
 
-3. **Start development server**: `just dev`
-   - Starts FastAPI server on http://localhost:8000
-   - Auto-reloads on code changes
-   - Use Ctrl+C to stop
+**Command details:**
 
-4. **Run tests**: `just test`
-   - Runs all pytest tests
-   - Shows verbose output
+- **`just init`** - Run once at the start of Part 3
+- **`just install`** - Installs all dependencies including dev tools (pytest, ruff, etc.)
+- **`just dev`** - Won't work until you create `src/notes_app/main.py` (Part 3, Section 3.5+)
+- **`just test`** - Works after install, but no tests exist until later
+- **`just inspect`** - Requires `just dev` running in another terminal first
+- **`just tunnel`** - Use when ready to connect to ChatGPT (Part 6)
 
-5. **Open MCP Inspector**: `just inspect`
-   - Opens web interface to test MCP tools
-   - Server must be running first (use `just dev` in another terminal)
-
-6. **Start ngrok tunnel**: `just tunnel`
-   - Exposes local server to internet
-   - Needed for ChatGPT integration
-   - Use Ctrl+C to stop
-
-7. **Format code**: `just format`
-   - Auto-formats all Python files
-
-8. **Lint code**: `just lint`
-   - Checks for code quality issues
-
-9. **Clean project**: `just clean`
-   - Removes temporary files and caches
-
-✅ **Checkpoint**: You should be able to run `just info` and see your environment details.
+✅ **For now**: Just verify that `just info` works. You'll use the other commands as you progress through Part 3.
 
 ---
 
@@ -893,7 +883,7 @@ Your terminal prompt should now show `(.venv)` at the beginning, indicating the 
 just install
 ```
 
-This installs all packages defined in `pyproject.toml`. You should see output like:
+This installs all packages defined in `pyproject.toml`, including both main dependencies and dev dependencies (pytest, ruff, etc.). You should see output like:
 ```
 📦 Installing dependencies...
 Resolved XX packages in XXms
@@ -902,6 +892,12 @@ Installed XX packages in XXms
 ```
 
 ✅ **Checkpoint**: You should see all dependencies installed without errors. If you see an error about "Unable to determine which files to ship", make sure your `pyproject.toml` includes the `[tool.hatch.build.targets.wheel]` section with `packages = ["src/notes_app"]`.
+
+You can verify the installation by checking that pytest and ruff are available:
+```bash
+uv run pytest --version
+uv run ruff --version
+```
 
 🎓 **You learned**:
 - How to initialize a Python virtual environment
