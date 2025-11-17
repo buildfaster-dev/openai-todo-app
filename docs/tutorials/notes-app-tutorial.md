@@ -2200,14 +2200,14 @@ When ChatGPT displays a widget, it follows this protocol:
        │    _meta: {            │                        │
        │      widget: {         │                        │
        │        resource_uri:   │                        │
-       │        "widget://..."  │                        │
+       │        "ui://widget/..."  │                        │
        │      }                 │                        │
        │    }                   │                        │
        │  }                     │                        │
        │<───────────────────────┤                        │
        │                        │                        │
        │  3. Request widget resource                     │
-       │     "widget://notes-list"                       │
+       │     "ui://widget/notes-list.html"                       │
        ├────────────────────────────────────────────────>│
        │                        │                        │
        │  4. Return HTML (with embedded CSS & JS)        │
@@ -2294,7 +2294,7 @@ window.openai.callTool({name: 'delete_note', ...}) →
 MCP server deletes note from storage →
 Tool returns success →
 window.openai.refreshWidget() →
-ChatGPT re-fetches widget://notes-list →
+ChatGPT re-fetches ui://widget/notes-list.html →
 Widget re-renders with updated notes list
 ```
 
@@ -2309,7 +2309,7 @@ ChatGPT calls list_notes tool
     ↓
 Tool returns _meta.widget.resource_uri
     ↓
-ChatGPT requests widget://notes-list
+ChatGPT requests ui://widget/notes-list.html
     ↓
 MCP server returns HTML
     ↓
@@ -2344,7 +2344,7 @@ Widget updates with new data
 │      ↓                                      │
 │  2. Tool returns widget URI                 │
 │      ↓                                      │
-│  3. Request widget://notes-list             │
+│  3. Request ui://widget/notes-list.html             │
 │      ↓                                      │
 │  4. Display widget with notes               │
 ├─────────────────────────────────────────────┤
@@ -2366,13 +2366,13 @@ For ChatGPT Apps SDK, widgets must:
 
 1. **Be self-contained HTML**: All CSS and JavaScript embedded in one file
 2. **Use specific MIME type**: `text/html+skybridge` (handled by FastMCP)
-3. **Use widget:// URI scheme**: e.g., `widget://notes-list`
+3. **Use ui://widget/ URI scheme**: e.g., `ui://widget/notes-list.html`
 4. **Be registered as MCP resources**: Use `@mcp.resource()` decorator
 
 **Example Widget Resource:**
 
 ```python
-@mcp.resource("widget://notes-list")
+@mcp.resource("ui://widget/notes-list.html")
 def notes_list_widget() -> str:
     """Widget to display and manage notes"""
 
@@ -2424,7 +2424,7 @@ async def list_notes() -> types.CallToolResult:
         # Widget reference in _meta
         _meta={
             "widget": {
-                "resource_uri": "widget://notes-list"
+                "resource_uri": "ui://widget/notes-list.html"
             }
         }
     )
@@ -2452,7 +2452,7 @@ Update `src/notes_app/mcp_server.py` to add widget support. Add this at the end 
 # Widget Resources
 # ============================================================================
 
-@mcp.resource("widget://notes-list")
+@mcp.resource("ui://widget/notes-list.html")
 def notes_list_widget() -> str:
     """Widget to display and manage notes"""
 
@@ -2921,7 +2921,7 @@ def list_notes() -> dict:
         ],
         "_meta": {
             "widget": {
-                "resource_uri": "widget://notes-list",
+                "resource_uri": "ui://widget/notes-list.html",
                 "title": "My Notes"
             }
         }
@@ -2970,18 +2970,18 @@ async def list_notes() -> types.CallToolResult:
         # Widget reference tells ChatGPT to display the widget
         _meta={
             "widget": {
-                "resource_uri": "widget://notes-list"
+                "resource_uri": "ui://widget/notes-list.html"
             }
         }
     )
 ```
 
-**4. ChatGPT**: Requests widget HTML from `widget://notes-list`
+**4. ChatGPT**: Requests widget HTML from `ui://widget/notes-list.html`
 
 **5. Your server**: Returns self-contained HTML widget
 
 ```python
-@mcp.resource("widget://notes-list")
+@mcp.resource("ui://widget/notes-list.html")
 def notes_list_widget() -> str:
     """Widget to display and manage notes"""
     notes = storage.list()
@@ -3078,7 +3078,7 @@ async def delete_note(noteId: str) -> types.CallToolResult:
 await window.openai.refreshWidget();
 ```
 
-**15. ChatGPT**: Re-requests widget HTML from `widget://notes-list`
+**15. ChatGPT**: Re-requests widget HTML from `ui://widget/notes-list.html`
 
 **16. Your server**: Generates fresh HTML (note is now deleted)
 
@@ -3099,10 +3099,10 @@ await window.openai.refreshWidget();
 │    ↓                                                        │
 │  Server Returns: {                                          │
 │    text: "Found 3 notes",                                   │
-│    _meta: { widget: { resource_uri: "widget://..." } }     │
+│    _meta: { widget: { resource_uri: "ui://widget/..." } }     │
 │  }                                                          │
 │    ↓                                                        │
-│  ChatGPT → Widget Resource (widget://notes-list)           │
+│  ChatGPT → Widget Resource (ui://widget/notes-list.html)           │
 │    ↓                                                        │
 │  Server Returns: <html>...</html>                           │
 │    ↓                                                        │
@@ -3156,7 +3156,7 @@ async def list_notes() -> types.CallToolResult:
         content=[...],
         _meta={
             "widget": {
-                "resource_uri": "widget://notes-list"  # ← Widget reference
+                "resource_uri": "ui://widget/notes-list.html"  # ← Widget reference
             }
         }
     )
@@ -3166,7 +3166,7 @@ async def list_notes() -> types.CallToolResult:
 
 ```python
 # In mcp_server.py
-@mcp.resource("widget://notes-list")  # ← Same URI as in _meta
+@mcp.resource("ui://widget/notes-list.html")  # ← Same URI as in _meta
 def notes_list_widget() -> str:
     return """
     <!DOCTYPE html>
@@ -3238,7 +3238,7 @@ just dev
 
 Open your browser and visit:
 ```
-http://localhost:8000/mcp/resources/widget://notes-list
+http://localhost:8000/mcp/resources/ui://widget/notes-list.html
 ```
 
 You should see the beautiful notes interface!
@@ -3379,7 +3379,7 @@ async def list_notes() -> types.CallToolResult:
         # ✨ This is the key! Tells ChatGPT to display the widget
         _meta={
             "widget": {
-                "resource_uri": "widget://notes-list",  # Widget URI
+                "resource_uri": "ui://widget/notes-list.html",  # Widget URI
                 "title": "My Notes",                     # Optional: Widget title
                 "invoking_message": "Loading notes...",  # Optional: Loading message
                 "invoked_message": "Notes loaded!"       # Optional: Success message
@@ -3405,7 +3405,7 @@ import os
 # Get public URL from environment
 PUBLIC_URL = os.getenv("PUBLIC_URL", "http://localhost:8000")
 
-@mcp.resource("widget://notes-list")  # ← Must match resource_uri above
+@mcp.resource("ui://widget/notes-list.html")  # ← Must match resource_uri above
 def notes_list_widget() -> str:
     """Generate HTML widget with ChatGPT integration
 
@@ -3605,10 +3605,10 @@ Here's how all the pieces work together:
 │  3. Your server returns:                                        │
 │     {                                                           │
 │       text: "Found 3 notes...",                                 │
-│       _meta: { widget: { resource_uri: "widget://notes-list" }}│
+│       _meta: { widget: { resource_uri: "ui://widget/notes-list.html" }}│
 │     }                                                           │
 │     ↓                                                           │
-│  4. ChatGPT → Requests widget://notes-list from your server    │
+│  4. ChatGPT → Requests ui://widget/notes-list.html from your server    │
 │     ↓                                                           │
 │  5. Your server → Returns HTML with window.openai code         │
 │     ↓                                                           │
@@ -3629,7 +3629,7 @@ Here's how all the pieces work together:
 │  11. Widget JS executes:                                        │
 │     await window.openai.refreshWidget()                         │
 │     ↓                                                           │
-│  12. ChatGPT → Re-requests widget://notes-list                 │
+│  12. ChatGPT → Re-requests ui://widget/notes-list.html                 │
 │     ↓                                                           │
 │  13. Your server → Returns fresh HTML (2 notes now)            │
 │     ↓                                                           │
@@ -3646,7 +3646,7 @@ Before connecting to ChatGPT, test the widget locally:
 **1. Test widget resource directly:**
 ```bash
 # View the widget HTML in browser
-open http://localhost:8000/mcp/resources/widget://notes-list
+open http://localhost:8000/mcp/resources/ui://widget/notes-list.html
 ```
 
 **2. Test with MCP Inspector:**
@@ -3766,7 +3766,7 @@ Your Server → Processes request
               Returns notes + widget reference
     ↓
 ChatGPT → POST https://your-ngrok-url.ngrok.io/mcp
-          (method: resources/read, uri: widget://notes-list)
+          (method: resources/read, uri: ui://widget/notes-list.html)
     ↓
 Your Server → Returns HTML widget
     ↓
