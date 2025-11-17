@@ -785,13 +785,75 @@ info:
 - What each command does and when to use it
 - How to structure commands with explanations
 
-### 2.9 Testing the Justfile Commands
+### 2.9 Create a Minimal main.py
 
-Let's verify that all justfile commands work correctly.
+Before we can test the development server, we need a minimal `main.py` file. Don't worry about understanding all the details yet - we'll expand this file with full MCP functionality in Part 3.
 
-⚠️ **Important**: At this point in the tutorial, **only `just info` will work**. The other commands require source code files that we'll create in Part 3.
+**Why we're doing this now**: This allows us to test that our development environment is working correctly before diving into the MCP implementation.
 
-**Test the info command** (works now):
+Create the file structure:
+
+```bash
+# Create the source directory if it doesn't exist
+mkdir -p src/notes_app
+
+# Create the main.py file
+touch src/notes_app/main.py
+```
+
+Now add this minimal FastAPI application to `src/notes_app/main.py`:
+
+```python
+"""Minimal FastAPI application for testing the development environment.
+
+This is a starter file that we'll expand with MCP functionality in Part 3.
+"""
+
+from fastapi import FastAPI
+
+# Create FastAPI application
+app = FastAPI(
+    title="Notes App",
+    description="A notes application with MCP integration",
+    version="0.1.0"
+)
+
+
+@app.get("/")
+async def root():
+    """Health check endpoint"""
+    return {
+        "status": "ok",
+        "message": "Notes App is running",
+        "version": "0.1.0"
+    }
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint for monitoring"""
+    return {"status": "healthy"}
+```
+
+**What this does:**
+- **FastAPI app**: Creates a basic web application
+- **root endpoint (`/`)**: Returns a welcome message
+- **health endpoint (`/health`)**: Simple health check for monitoring
+- **This is temporary**: We'll add MCP functionality in Part 3
+
+✅ **Checkpoint**: The file should be created at `src/notes_app/main.py`
+
+🎓 **You learned**:
+- How to create a minimal FastAPI application
+- Basic FastAPI endpoint structure
+- The importance of health check endpoints
+
+### 2.10 Testing the Development Environment
+
+Now let's verify that our development environment is working correctly. We'll test several commands to ensure everything is set up properly.
+
+**Step 1: Test the info command**
+
 ```bash
 just info
 ```
@@ -806,105 +868,124 @@ uv version: uv x.x.x
 Working directory: /path/to/my-notes-app
 ```
 
-✅ **Checkpoint**: If `just info` works, you're ready to continue!
+✅ **Checkpoint**: You should see your environment information.
 
-**Commands you'll use later in the tutorial:**
+**Step 2: Initialize and install dependencies**
 
-| Command | When Available | Purpose |
-|---------|---------------|---------|
-| `just init` | **Part 3, Section 3.2** | Creates Python virtual environment |
-| `just install` | **Part 3, Section 3.2** | Installs all packages (including dev dependencies) |
-| `just test` | **After install** | Runs pytest tests (once tests exist) |
-| `just dev` | **After creating main.py** | Starts FastAPI server on http://localhost:8000 |
-| `just inspect` | **After dev server running** | Opens MCP Inspector to test tools |
-| `just tunnel` | **Part 6** | Exposes server to internet for ChatGPT |
-| `just format` | **Anytime after install** | Auto-formats Python files |
-| `just lint` | **Anytime after install** | Checks code quality |
-| `just clean` | **Anytime** | Removes temporary files |
+```bash
+# Create virtual environment
+just init
 
-**Command details:**
+# Activate it
+source .venv/bin/activate
 
-- **`just init`** - Run once at the start of Part 3
-- **`just install`** - Installs all dependencies including dev tools (pytest, ruff, etc.)
-- **`just dev`** - Won't work until you create `src/notes_app/main.py` (Part 3, Section 3.5+)
-- **`just test`** - Works after install, but no tests exist until later
-- **`just inspect`** - Requires `just dev` running in another terminal first
-- **`just tunnel`** - Use when ready to connect to ChatGPT (Part 6)
+# Install all dependencies
+just install
+```
 
-✅ **For now**: Just verify that `just info` works. You'll use the other commands as you progress through Part 3.
+Expected output from `just install`:
+```
+📦 Installing dependencies...
+Resolved XX packages in XXms
+Installed XX packages in XXms
+```
+
+✅ **Checkpoint**: All dependencies should install without errors.
+
+**Step 3: Start the development server**
+
+```bash
+just dev
+```
+
+Expected output:
+```
+🚀 Starting development server...
+INFO:     Will watch for changes in these directories: ['/path/to/my-notes-app']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [XXXXX] using WatchFiles
+INFO:     Started server process [XXXXX]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+```
+
+✅ **Checkpoint**: The server should start without errors!
+
+**Step 4: Test the server in your browser**
+
+Open your browser and visit:
+- http://localhost:8000 - You should see: `{"status": "ok", "message": "Notes App is running", "version": "0.1.0"}`
+- http://localhost:8000/health - You should see: `{"status": "healthy"}`
+- http://localhost:8000/docs - You should see the FastAPI automatic documentation
+
+**Step 5: Stop the server**
+
+Press `Ctrl+C` in the terminal where the server is running.
+
+**Command Availability Summary:**
+
+| Command | Status | Purpose |
+|---------|--------|---------|
+| `just info` | ✅ Works now | Shows environment information |
+| `just init` | ✅ Works now | Creates Python virtual environment |
+| `just install` | ✅ Works now | Installs all packages (including dev dependencies) |
+| `just dev` | ✅ Works now | Starts FastAPI server on http://localhost:8000 |
+| `just test` | ⏳ Works but no tests yet | Runs pytest tests |
+| `just format` | ✅ Works now | Auto-formats Python files |
+| `just lint` | ✅ Works now | Checks code quality |
+| `just clean` | ✅ Works now | Removes temporary files |
+| `just inspect` | ⏳ Part 3 (after MCP server) | Opens MCP Inspector to test tools |
+| `just tunnel` | ⏳ Part 6 | Exposes server to internet for ChatGPT |
+
+**What's Next:**
+
+In Part 3, we'll expand `main.py` to include:
+- MCP server integration
+- Data models for notes
+- Storage layer
+- MCP tools (create_note, list_notes, etc.)
+- Interactive widgets
+
+✅ **For now**: You have a working development environment with a running FastAPI server!
 
 ---
 
 ## Part 3: Building the MCP Server
 
-### 3.1 Create Project Structure
+Now that we have a working development environment with a minimal FastAPI server, let's build the complete MCP (Model Context Protocol) server with notes functionality.
+
+**What we'll build in Part 3:**
+1. Data models (Note, NoteCreate, NoteUpdate, NoteStats)
+2. Storage layer (in-memory database)
+3. Expand main.py with MCP server integration
+4. MCP tools (create_note, list_notes, update_note, delete_note)
+5. REST API endpoints
+
+### 3.1 Verify Your Setup
+
+Before we begin, make sure you completed Part 2 and have:
+
+✅ Virtual environment activated (you should see `(.venv)` in your terminal)
+✅ Dependencies installed (ran `just install`)
+✅ Development server working (tested `just dev`)
+
+If you haven't done these steps, go back to **Part 2, Section 2.10** and complete them.
+
+**Quick verification:**
 
 ```bash
-# Create source directories
-mkdir -p src/notes_app
-touch src/notes_app/__init__.py
+# Check that you're in the virtual environment
+which python
+# Should show: /path/to/my-notes-app/.venv/bin/python
 
-# Create tests directory
-mkdir -p tests
-touch tests/__init__.py
-
-# Create docs
-mkdir -p docs
-```
-
-### 3.2 Install Dependencies
-
-Now let's set up the Python environment and install dependencies.
-
-**Step 1: Initialize the virtual environment**
-
-```bash
-just init
-```
-
-This creates a Python virtual environment in the `.venv` directory. You should see:
-```
-📦 Initializing project...
-✅ Virtual environment created
-Run: source .venv/bin/activate
-```
-
-**Step 2: Activate the virtual environment**
-
-```bash
-source .venv/bin/activate
-```
-
-Your terminal prompt should now show `(.venv)` at the beginning, indicating the virtual environment is active.
-
-**Step 3: Install all dependencies**
-
-```bash
-just install
-```
-
-This installs all packages defined in `pyproject.toml`, including both main dependencies and dev dependencies (pytest, ruff, etc.). You should see output like:
-```
-📦 Installing dependencies...
-Resolved XX packages in XXms
-Downloaded XX packages in XXs
-Installed XX packages in XXms
-```
-
-✅ **Checkpoint**: You should see all dependencies installed without errors. If you see an error about "Unable to determine which files to ship", make sure your `pyproject.toml` includes the `[tool.hatch.build.targets.wheel]` section with `packages = ["src/notes_app"]`.
-
-You can verify the installation by checking that pytest and ruff are available:
-```bash
+# Check that dependencies are installed
 uv run pytest --version
 uv run ruff --version
 ```
 
-🎓 **You learned**:
-- How to initialize a Python virtual environment
-- How to install dependencies using uv
-- How to verify successful installation
+If all checks pass, you're ready to continue! 🚀
 
-### 3.3 Create Data Models - Step by Step
+### 3.2 Create Data Models - Step by Step
 
 Data models define the structure of your data. Let's build `src/notes_app/models.py` gradually:
 
@@ -1082,7 +1163,7 @@ class NoteStats(BaseModel):
 - How to use Field for validation and documentation
 - How to use Optional for nullable fields
 
-### 3.4 Create Storage Layer - Step by Step
+### 3.3 Create Storage Layer - Step by Step
 
 The storage layer handles data persistence. We'll use in-memory storage for simplicity. Create `src/notes_app/storage.py`:
 
@@ -1438,9 +1519,11 @@ storage = NotesStorage()
 - How to use Python dictionaries for in-memory storage
 - How to calculate statistics from stored data
 
-### 3.5 Create the MCP Server - Understanding the Architecture
+### 3.4 Expand main.py with MCP Server
 
-Before diving into code, let's understand the MCP server architecture:
+Now we'll transform our minimal `main.py` into a complete MCP server. Remember, we already created a basic version in Part 2 - now we're going to expand it with full MCP functionality.
+
+**Before diving into code**, let's understand the MCP server architecture:
 
 ```
 MCP Server Components:
@@ -1477,11 +1560,19 @@ Let's build this step by step. Due to the complexity, we'll break it into manage
 - Storage layer with CRUD operations
 - Each file explained step by step with clear comments
 
-The tutorial continues with:
-- Part 3.6: MCP Server (simplified and explained)
+🎓 **What you've learned so far**:
+- Part 2: Complete development environment setup (Nix, pyproject.toml, justfile, minimal main.py)
+- Part 3.1: Verified your setup
+- Part 3.2: Created data models with Pydantic
+- Part 3.3: Implemented storage layer with CRUD operations
+- Part 3.4: Understanding MCP server architecture (current section)
+
+**The tutorial continues with:**
+- Part 3.4 continued: Complete MCP server implementation
+- Part 3.5: Creating mcp_server.py with tools and resources
 - Part 4: Testing with MCP Inspector
-- Part 5: **Creating Interactive Widgets (EVOLUTIONARY APPROACH - simple to complex)**
+- Part 5: Creating Interactive Widgets (EVOLUTIONARY APPROACH - simple to complex)
 - Part 6: Connecting to ChatGPT
 - Part 7: Production Deployment
 
-Would you like me to continue with the MCP server section and especially the evolutionary widget creation?
+**Next steps:** We need to complete the MCP server implementation in section 3.4 and create the mcp_server.py file in section 3.5.
