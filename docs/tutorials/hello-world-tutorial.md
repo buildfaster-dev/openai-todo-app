@@ -490,9 +490,104 @@ packages = ["src/helloworld_app"]
 - Qué dependencias necesitas para una app MCP básica
 - Cómo configurar el sistema de construcción
 
-### 2.8 Crear justfile - Paso a Paso
+### 2.8 Crear .env.example
+
+Antes de crear el `justfile`, necesitamos crear el archivo `.env.example` que el justfile va a copiar.
+
+**Crear `.env.example`:**
+
+```bash
+# URL pública de tu aplicación
+# Durante desarrollo local:
+PUBLIC_URL=http://localhost:8000
+
+# Cuando uses ngrok, cambiarás esto a:
+# PUBLIC_URL=https://tu-url-ngrok.ngrok.app
+```
+
+**Qué hace esto:**
+- Define la URL pública de tu aplicación
+- Se usará para que los widgets sepan dónde llamar las APIs
+- Durante desarrollo local usa `localhost:8000`
+- Cuando uses ngrok, actualizarás esta URL en `.env` (no en `.env.example`)
+
+🎓 **Aprendiste**:
+- Para qué sirve el archivo `.env.example`
+- Qué variables de entorno necesita tu app
+- La diferencia entre `.env.example` (template) y `.env` (valores reales)
+
+### 2.9 Crear .gitignore
+
+También necesitamos crear `.gitignore` para evitar commitear archivos sensibles o generados:
+
+**Crear `.gitignore`:**
+
+```
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables
+.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# uv
+uv.lock
+
+# Nix
+.direnv/
+result
+```
+
+**Qué hace esto:**
+- Ignora archivos generados por Python (`__pycache__`, `*.pyc`)
+- Ignora el entorno virtual (`.venv/`)
+- **Importante**: Ignora `.env` (que contiene configuración local/sensible)
+- No ignora `.env.example` (que es el template que sí se commitea)
+
+### 2.10 Crear justfile - Paso a Paso
 
 El `justfile` es como un Makefile pero más simple. Define comandos útiles para tu proyecto.
+
+**Requerimientos previos:**
+Antes de crear el `justfile`, asegúrate de tener:
+- ✅ `pyproject.toml` (creado en sección 2.7)
+- ✅ `.env.example` (creado en sección 2.8)
+- ✅ Entorno Nix activo (entrado con `nix develop` en sección 2.6)
 
 **Paso 1: Comando de Inicialización**
 
@@ -612,6 +707,34 @@ info:
 - Cómo crear un `justfile` para automatizar tareas
 - Comandos útiles para desarrollo
 - Cómo usar `uv` para gestionar dependencias
+- Qué archivos necesita el `justfile` para funcionar correctamente
+
+### 2.11 Inicializar el Proyecto
+
+Ahora que todos los archivos de configuración están listos, podemos inicializar el proyecto:
+
+```bash
+# Inicializar el proyecto (crea .env, instala dependencias)
+just init
+```
+
+**Esto:**
+1. Crea el entorno virtual con `uv venv`
+2. Instala las dependencias definidas en `pyproject.toml`
+3. Copia `.env.example` a `.env` para configuración local
+
+**Salida esperada:**
+```
+📦 Creando entorno virtual...
+📥 Instalando dependencias...
+📝 Configurando variables de entorno...
+✅ Proyecto inicializado. Usa 'just dev' para empezar.
+```
+
+🎓 **Aprendiste**:
+- El orden correcto de inicialización del proyecto
+- Cómo `uv` gestiona entornos virtuales y dependencias
+- La diferencia entre archivos de configuración (template) y archivos locales
 
 ---
 
@@ -1256,89 +1379,7 @@ if __name__ == "__main__":
 - Cómo integrar un servidor MCP con FastAPI
 - Por qué necesitamos CORS
 - Cómo montar el servidor MCP en un endpoint
-
-### 3.5 Crear Archivos de Configuración
-
-**Crear `.env.example`:**
-
-```bash
-# URL pública de tu aplicación
-# Durante desarrollo local:
-PUBLIC_URL=http://localhost:8000
-
-# Cuando uses ngrok, cambiarás esto a:
-# PUBLIC_URL=https://tu-url-ngrok.ngrok.app
-```
-
-**Crear `.gitignore`:**
-
-```
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
-.venv/
-venv/
-ENV/
-env/
-
-# Environment variables
-.env
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# uv
-uv.lock
-
-# Nix
-.direnv/
-result
-```
-
-### 3.6 Inicializar el Proyecto
-
-```bash
-# Inicializar el proyecto (crea .env, instala dependencias)
-just init
-```
-
-Esto:
-1. Crea el entorno virtual
-2. Instala las dependencias
-3. Copia `.env.example` a `.env`
-
-🎓 **Aprendiste**:
-- Estructura completa de un proyecto MCP
-- Cómo organizar archivos de configuración
-- Cómo inicializar el proyecto
+- La estructura completa de un proyecto MCP
 
 ---
 
