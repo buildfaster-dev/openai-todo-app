@@ -610,6 +610,64 @@ info:
 - What each command does and when to use it
 - How to structure commands with explanations
 
+### 2.8 Testing the Justfile Commands
+
+Let's verify that all justfile commands work correctly. You don't need to complete all these steps now (we haven't created the source code yet), but here's how each command will be used:
+
+**Test the info command** (works now):
+```bash
+just info
+```
+
+Expected output:
+```
+📊 Environment Information
+━━━━━━━━━━━━━━━━━━━━━━━━
+Python: /nix/store/.../bin/python
+Python version: Python 3.11.x
+uv version: uv x.x.x
+Working directory: /path/to/my-notes-app
+```
+
+**How to use other commands** (later in the tutorial):
+
+1. **Initialize project**: `just init`
+   - Creates Python virtual environment
+   - Run once at project start
+
+2. **Install dependencies**: `just install`
+   - Installs all packages from pyproject.toml
+   - Run after modifying dependencies
+
+3. **Start development server**: `just dev`
+   - Starts FastAPI server on http://localhost:8000
+   - Auto-reloads on code changes
+   - Use Ctrl+C to stop
+
+4. **Run tests**: `just test`
+   - Runs all pytest tests
+   - Shows verbose output
+
+5. **Open MCP Inspector**: `just inspect`
+   - Opens web interface to test MCP tools
+   - Server must be running first (use `just dev` in another terminal)
+
+6. **Start ngrok tunnel**: `just tunnel`
+   - Exposes local server to internet
+   - Needed for ChatGPT integration
+   - Use Ctrl+C to stop
+
+7. **Format code**: `just format`
+   - Auto-formats all Python files
+
+8. **Lint code**: `just lint`
+   - Checks for code quality issues
+
+9. **Clean project**: `just clean`
+   - Removes temporary files and caches
+
+✅ **Checkpoint**: You should be able to run `just info` and see your environment details.
+
 ---
 
 ## Part 3: Building the MCP Server
@@ -706,7 +764,21 @@ build-backend = "hatchling.build"
 - Specifies that we use `hatchling` to build the package
 - Modern build backend (alternative to setuptools)
 
-**Step 5: Pytest Configuration**
+**Step 5: Hatchling Build Configuration**
+
+Configure hatchling to find your package:
+
+```toml
+[tool.hatch.build.targets.wheel]
+packages = ["src/notes_app"]  # Tell hatchling where to find the package
+```
+
+**What this does:**
+- `packages`: Specifies the directory path to your Python package
+- This fixes the "Unable to determine which files to ship" error
+- Required because our package is in `src/notes_app` instead of the project root
+
+**Step 6: Pytest Configuration**
 
 Configure pytest behavior:
 
@@ -720,7 +792,7 @@ testpaths = ["tests"]  # Where to find test files
 - `asyncio_mode = "auto"`: Pytest automatically handles async tests
 - `testpaths`: Tells pytest where to look for tests
 
-**Step 6: Ruff Configuration**
+**Step 7: Ruff Configuration**
 
 Configure the linter and formatter:
 
@@ -768,6 +840,9 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/notes_app"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
@@ -783,16 +858,44 @@ ignore = ["E501"]
 
 ### 3.3 Install Dependencies
 
-```bash
-# Initialize virtual environment
-just init
-source .venv/bin/activate
+Now let's set up the Python environment and install dependencies.
 
-# Install all dependencies
+**Step 1: Initialize the virtual environment**
+
+```bash
+just init
+```
+
+This creates a Python virtual environment in the `.venv` directory. You should see:
+```
+📦 Initializing project...
+✅ Virtual environment created
+Run: source .venv/bin/activate
+```
+
+**Step 2: Activate the virtual environment**
+
+```bash
+source .venv/bin/activate
+```
+
+Your terminal prompt should now show `(.venv)` at the beginning, indicating the virtual environment is active.
+
+**Step 3: Install all dependencies**
+
+```bash
 just install
 ```
 
-✅ **Checkpoint**: You should see all dependencies installed without errors.
+This installs all packages defined in `pyproject.toml`. You should see output like:
+```
+📦 Installing dependencies...
+Resolved XX packages in XXms
+Downloaded XX packages in XXs
+Installed XX packages in XXms
+```
+
+✅ **Checkpoint**: You should see all dependencies installed without errors. If you see an error about "Unable to determine which files to ship", make sure your `pyproject.toml` includes the `[tool.hatch.build.targets.wheel]` section with `packages = ["src/notes_app"]`.
 
 🎓 **You learned**:
 - How to structure a Python project with pyproject.toml
