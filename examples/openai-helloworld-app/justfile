@@ -1,0 +1,34 @@
+# Inicializar el proyecto (primera vez)
+init:
+    @echo "📦 Creando entorno virtual..."
+    uv venv
+    @echo "📥 Instalando dependencias..."
+    uv sync
+    @echo "📝 Configurando variables de entorno..."
+    cp .env.example .env
+    @echo "✅ Proyecto inicializado. Usa 'just dev' para empezar."
+
+# Iniciar servidor de desarrollo
+dev:
+    @echo "🚀 Iniciando servidor de desarrollo..."
+    uv run uvicorn src.helloworld_app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Iniciar túnel ngrok
+tunnel:
+    @echo "🌍 Iniciando túnel ngrok..."
+    @echo "⚠️  Copia la URL HTTPS y actualiza PUBLIC_URL en .env"
+    ngrok http 8000
+
+# Mostrar información del proyecto
+info:
+    @echo "👋 Hola Mundo App"
+    @echo "═══════════════════════════════════"
+    @echo "📍 Servidor: http://localhost:8000"
+    @echo "📍 MCP Endpoint: http://localhost:8000/mcp"
+    @echo "📍 Docs API: http://localhost:8000/docs"
+    @echo ""
+    @echo "Comandos disponibles:"
+    @echo "  just init    - Inicializar proyecto"
+    @echo "  just dev     - Servidor de desarrollo"
+    @echo "  just tunnel  - Iniciar ngrok"
+    @echo "  just info    - Mostrar esta información"
