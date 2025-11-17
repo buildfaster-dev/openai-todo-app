@@ -2176,293 +2176,13 @@ Tool processes request
 Widget updates
 ```
 
-### 5.3 Widget Component Architecture
+### 5.3 ChatGPT Apps SDK Widget Architecture
 
-Let's break down the internal architecture of a widget. Understanding these components is crucial for building effective interactive interfaces.
+This section explains how ChatGPT interacts with widgets through the OpenAI Apps SDK, focusing on the communication protocol and available APIs.
 
-**Widget Structure:**
+#### **ChatGPT Widget Request Flow**
 
-```
-Widget (Single HTML File)
-┌─────────────────────────────────────────────────────────┐
-│                      widget://notes-list                │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  ┌────────────────────────────────────────────────┐   │
-│  │  1. HTML Structure Layer                       │   │
-│  ├────────────────────────────────────────────────┤   │
-│  │  • Container elements                          │   │
-│  │  • Header section                              │   │
-│  │  • Stats cards                                 │   │
-│  │  • Form inputs (title, content)                │   │
-│  │  • Dynamic content containers                  │   │
-│  │  • Interactive buttons                         │   │
-│  └────────────────────────────────────────────────┘   │
-│                                                         │
-│  ┌────────────────────────────────────────────────┐   │
-│  │  2. CSS Styling Layer                          │   │
-│  ├────────────────────────────────────────────────┤   │
-│  │  • Layout (flexbox, grid)                      │   │
-│  │  • Color scheme & gradients                    │   │
-│  │  • Typography & spacing                        │   │
-│  │  • Responsive design                           │   │
-│  │  • Hover & transition effects                  │   │
-│  │  • State styles (loading, error, empty)        │   │
-│  └────────────────────────────────────────────────┘   │
-│                                                         │
-│  ┌────────────────────────────────────────────────┐   │
-│  │  3. JavaScript Logic Layer                     │   │
-│  ├────────────────────────────────────────────────┤   │
-│  │  • Configuration (API_BASE)                    │   │
-│  │  • Event listeners                             │   │
-│  │  • Data fetching functions                     │   │
-│  │  • Rendering functions                         │   │
-│  │  • User interaction handlers                   │   │
-│  │  • Error handling                              │   │
-│  └────────────────────────────────────────────────┘   │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
-
-**Detailed Component Breakdown:**
-
-#### **Layer 1: HTML Structure Components**
-
-```
-HTML Elements Hierarchy:
-┌──────────────────────────────────┐
-│   <body>                         │
-│   └── <div class="container">   │
-│       ├── Header Section         │
-│       │   ├── <h1> Title         │
-│       │   └── <p> Subtitle       │
-│       │                          │
-│       ├── Stats Section          │
-│       │   └── <div id="stats">   │
-│       │       ├── Stat Card 1    │
-│       │       ├── Stat Card 2    │
-│       │       └── Stat Card 3    │
-│       │                          │
-│       ├── Create Section         │
-│       │   ├── <h2> Section Title │
-│       │   ├── Input: Title       │
-│       │   ├── Textarea: Content  │
-│       │   └── Button: Create     │
-│       │                          │
-│       └── Notes Container        │
-│           └── <div id="notes-container">
-│               └── Dynamic Notes  │
-│                   ├── Note Card 1│
-│                   ├── Note Card 2│
-│                   └── Note Card N│
-└──────────────────────────────────┘
-```
-
-**Key HTML Elements:**
-
-1. **Container Div**: Main wrapper for layout control
-2. **Header Section**: Title and description
-3. **Stats Section**: Real-time statistics display
-4. **Create Section**: Form for new note creation
-5. **Notes Container**: Dynamic list of note cards
-6. **Interactive Elements**: Buttons, inputs, textareas
-
-#### **Layer 2: CSS Styling Components**
-
-```
-CSS Organization:
-┌──────────────────────────────────────┐
-│  1. Reset & Base Styles              │
-│     • Universal box-sizing           │
-│     • Zero margins/padding           │
-│     • Font family                    │
-├──────────────────────────────────────┤
-│  2. Layout Styles                    │
-│     • Container max-width            │
-│     • Flexbox for stats              │
-│     • Grid for note cards            │
-├──────────────────────────────────────┤
-│  3. Component Styles                 │
-│     • Header (text-align, color)     │
-│     • Stat Cards (shadow, border)    │
-│     • Forms (input, textarea)        │
-│     • Buttons (primary, secondary)   │
-│     • Note Cards (padding, shadow)   │
-├──────────────────────────────────────┤
-│  4. State Styles                     │
-│     • .loading (centered spinner)    │
-│     • .error (red background)        │
-│     • .empty-state (placeholder)     │
-│     • :hover (transform, shadow)     │
-│     • :focus (border color)          │
-├──────────────────────────────────────┤
-│  5. Visual Effects                   │
-│     • Gradients (background)         │
-│     • Shadows (box-shadow)           │
-│     • Transitions (all 0.3s)         │
-│     • Transforms (translateY)        │
-└──────────────────────────────────────┘
-```
-
-**CSS Design Patterns:**
-
-```css
-/* Pattern 1: Gradient Background */
-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-
-/* Pattern 2: Card Shadow */
-box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-
-/* Pattern 3: Hover Effect */
-.note-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-}
-
-/* Pattern 4: Responsive Layout */
-.stats {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;  /* Mobile-friendly */
-}
-```
-
-#### **Layer 3: JavaScript Logic Components**
-
-```
-JavaScript Architecture:
-┌─────────────────────────────────────────┐
-│  Configuration                          │
-│  ┌───────────────────────────────────┐ │
-│  │ const API_BASE = '{PUBLIC_URL}'   │ │
-│  └───────────────────────────────────┘ │
-├─────────────────────────────────────────┤
-│  Initialization                         │
-│  ┌───────────────────────────────────┐ │
-│  │ window.addEventListener('load')   │ │
-│  │   → loadNotes()                   │ │
-│  │   → loadStats()                   │ │
-│  └───────────────────────────────────┘ │
-├─────────────────────────────────────────┤
-│  Data Fetching Layer                    │
-│  ┌───────────────────────────────────┐ │
-│  │ async loadNotes()                 │ │
-│  │   → fetch(`${API_BASE}/notes`)    │ │
-│  │   → displayNotes(data.notes)      │ │
-│  │                                   │ │
-│  │ async loadStats()                 │ │
-│  │   → fetch(`${API_BASE}/stats`)    │ │
-│  │   → displayStats(stats)           │ │
-│  └───────────────────────────────────┘ │
-├─────────────────────────────────────────┤
-│  Rendering Layer                        │
-│  ┌───────────────────────────────────┐ │
-│  │ displayNotes(notes)               │ │
-│  │   → Check if empty                │ │
-│  │   → Generate HTML for each note   │ │
-│  │   → Inject into container         │ │
-│  │                                   │ │
-│  │ displayStats(stats)               │ │
-│  │   → Generate stat cards HTML      │ │
-│  │   → Update stats container        │ │
-│  └───────────────────────────────────┘ │
-├─────────────────────────────────────────┤
-│  User Interaction Layer                 │
-│  ┌───────────────────────────────────┐ │
-│  │ async createNote()                │ │
-│  │   → Validate inputs               │ │
-│  │   → POST to /api/notes            │ │
-│  │   → Reload notes & stats          │ │
-│  │                                   │ │
-│  │ async editNote(noteId)            │ │
-│  │   → Prompt for new data           │ │
-│  │   → PATCH to /api/notes/:id       │ │
-│  │   → Reload notes & stats          │ │
-│  │                                   │ │
-│  │ async deleteNote(noteId)          │ │
-│  │   → Confirm deletion              │ │
-│  │   → DELETE to /api/notes/:id      │ │
-│  │   → Reload notes & stats          │ │
-│  └───────────────────────────────────┘ │
-├─────────────────────────────────────────┤
-│  Utility Layer                          │
-│  ┌───────────────────────────────────┐ │
-│  │ escapeHtml(text)                  │ │
-│  │   → Prevent XSS attacks           │ │
-│  │   → Safely render user content    │ │
-│  └───────────────────────────────────┘ │
-└─────────────────────────────────────────┘
-```
-
-**JavaScript Function Flow:**
-
-```
-Page Load Sequence:
-1. window.addEventListener('load') fires
-2. loadNotes() → fetch data → displayNotes()
-3. loadStats() → fetch data → displayStats()
-
-User Creates Note:
-1. User fills form → clicks "Create Note"
-2. createNote() → validate inputs
-3. fetch POST → server creates note
-4. loadNotes() → refresh display
-5. loadStats() → update counters
-
-User Edits Note:
-1. User clicks "Edit" button
-2. editNote(id) → prompt for changes
-3. fetch PATCH → server updates note
-4. loadNotes() → refresh display
-5. loadStats() → update counters
-
-User Deletes Note:
-1. User clicks "Delete" button
-2. deleteNote(id) → confirm action
-3. fetch DELETE → server removes note
-4. loadNotes() → refresh display
-5. loadStats() → update counters
-```
-
-#### **Communication Patterns**
-
-**Pattern 1: Widget ↔ REST API**
-
-```
-┌──────────────┐                    ┌──────────────┐
-│   Widget     │                    │  REST API    │
-│  JavaScript  │                    │  Endpoints   │
-└──────┬───────┘                    └──────┬───────┘
-       │                                   │
-       │  GET /api/notes                   │
-       ├──────────────────────────────────>│
-       │                                   │
-       │  JSON: { notes: [...] }           │
-       │<──────────────────────────────────┤
-       │                                   │
-       │  POST /api/notes                  │
-       │  Body: { title, content }         │
-       ├──────────────────────────────────>│
-       │                                   │
-       │  JSON: { id, title, content, ... }│
-       │<──────────────────────────────────┤
-       │                                   │
-       │  PATCH /api/notes/:id             │
-       │  Body: { title?, content? }       │
-       ├──────────────────────────────────>│
-       │                                   │
-       │  JSON: { updated note }           │
-       │<──────────────────────────────────┤
-       │                                   │
-       │  DELETE /api/notes/:id            │
-       ├──────────────────────────────────>│
-       │                                   │
-       │  JSON: { success: true }          │
-       │<──────────────────────────────────┤
-       │                                   │
-```
-
-**Pattern 2: MCP Tool → Widget Resource**
+When ChatGPT displays a widget, it follows this protocol:
 
 ```
 ┌──────────────┐         ┌──────────────┐         ┌──────────────┐
@@ -2470,165 +2190,258 @@ User Deletes Note:
 │              │         │ (list_notes) │         │  Resource    │
 └──────┬───────┘         └──────┬───────┘         └──────┬───────┘
        │                        │                        │
-       │  Call list_notes       │                        │
+       │  1. Call MCP tool      │                        │
+       │     "list_notes"       │                        │
        ├───────────────────────>│                        │
        │                        │                        │
-       │  Return:               │                        │
+       │  2. Tool returns:      │                        │
        │  {                     │                        │
        │    notes: [...],       │                        │
        │    _meta: {            │                        │
        │      widget: {         │                        │
-       │        resource_uri    │                        │
+       │        resource_uri:   │                        │
+       │        "widget://..."  │                        │
        │      }                 │                        │
        │    }                   │                        │
        │  }                     │                        │
        │<───────────────────────┤                        │
        │                        │                        │
-       │  Request widget://notes-list                    │
+       │  3. Request widget resource                     │
+       │     "widget://notes-list"                       │
        ├────────────────────────────────────────────────>│
        │                        │                        │
-       │  Return HTML (with embedded CSS & JS)           │
+       │  4. Return HTML (with embedded CSS & JS)        │
        │<────────────────────────────────────────────────┤
        │                        │                        │
-       │  Display Widget        │                        │
+       │  5. Render widget in iframe                     │
+       │     in ChatGPT UI      │                        │
        │                        │                        │
 ```
 
-**Pattern 3: Widget Internal Data Flow**
+**Key Steps:**
+
+1. **MCP Tool Call**: ChatGPT calls an MCP tool (e.g., `list_notes`)
+2. **Widget Reference**: Tool returns data + widget URI in `_meta.widget.resource_uri`
+3. **Widget Request**: ChatGPT requests the widget HTML from the resource URI
+4. **HTML Response**: MCP server returns self-contained HTML (with CSS & JS embedded)
+5. **Rendering**: ChatGPT renders the widget in an iframe within the chat interface
+
+#### **window.openai API**
+
+ChatGPT provides a JavaScript API to widgets through the `window.openai` object. This enables widgets to communicate back with MCP tools.
+
+**Available Methods:**
+
+**1. window.openai.callTool()**
+
+Calls an MCP tool from widget JavaScript code.
+
+```javascript
+// Call an MCP tool
+const result = await window.openai.callTool({
+    name: 'delete_note',      // Tool name from mcp_server.py
+    arguments: {              // Tool arguments
+        noteId: '123'
+    }
+});
+```
+
+**Features:**
+- Returns a Promise (use `await`)
+- Passes arguments to the MCP tool
+- Returns the tool result
+- Handles errors if tool call fails
+
+**Example Usage:**
+```javascript
+async function deleteNote(noteId) {
+    if (!confirm('Delete this note?')) return;
+
+    try {
+        const result = await window.openai.callTool({
+            name: 'delete_note',
+            arguments: { noteId: noteId }
+        });
+
+        // Refresh widget after deletion
+        await window.openai.refreshWidget();
+    } catch (error) {
+        console.error('Failed to delete:', error);
+        alert('Delete failed. Please try again.');
+    }
+}
+```
+
+**2. window.openai.refreshWidget()**
+
+Tells ChatGPT to re-fetch and re-render the widget with fresh data.
+
+```javascript
+// Refresh the widget
+await window.openai.refreshWidget();
+```
+
+**What happens:**
+1. ChatGPT requests widget HTML again from your MCP server
+2. Your server generates fresh HTML with updated data
+3. ChatGPT re-renders the widget in the UI
+4. User sees updated content
+
+**Example Flow:**
+```
+User clicks delete → deleteNote('123') →
+window.openai.callTool({name: 'delete_note', ...}) →
+MCP server deletes note from storage →
+Tool returns success →
+window.openai.refreshWidget() →
+ChatGPT re-fetches widget://notes-list →
+Widget re-renders with updated notes list
+```
+
+#### **Widget Communication Patterns**
+
+**Pattern 1: Tool → Widget (Initial Display)**
 
 ```
-Data Flow Inside Widget:
+User: "Show my notes"
+    ↓
+ChatGPT calls list_notes tool
+    ↓
+Tool returns _meta.widget.resource_uri
+    ↓
+ChatGPT requests widget://notes-list
+    ↓
+MCP server returns HTML
+    ↓
+ChatGPT displays widget
+```
+
+**Pattern 2: Widget → Tool (User Interaction)**
+
+```
+User clicks button in widget
+    ↓
+JavaScript handler fires
+    ↓
+window.openai.callTool({...})
+    ↓
+MCP server processes request
+    ↓
+Tool returns result
+    ↓
+window.openai.refreshWidget()
+    ↓
+Widget updates with new data
+```
+
+**Pattern 3: Full Round Trip**
+
+```
 ┌─────────────────────────────────────────────┐
-│                                             │
-│  1. Initial Load                            │
-│     loadNotes() ──> fetch() ──> response    │
-│                          ↓                  │
-│                     JSON data               │
-│                          ↓                  │
-│                  displayNotes(data)         │
-│                          ↓                  │
-│               Generate HTML string          │
-│                          ↓                  │
-│            innerHTML = generatedHTML        │
-│                          ↓                  │
-│                  DOM Updated                │
-│                                             │
+│  ChatGPT: "Show my notes"                   │
+│      ↓                                      │
+│  1. Call list_notes tool                    │
+│      ↓                                      │
+│  2. Tool returns widget URI                 │
+│      ↓                                      │
+│  3. Request widget://notes-list             │
+│      ↓                                      │
+│  4. Display widget with notes               │
 ├─────────────────────────────────────────────┤
-│                                             │
-│  2. User Interaction                        │
-│     User clicks button                      │
-│            ↓                                │
-│     Event handler fires                     │
-│            ↓                                │
-│     Validate & prepare data                 │
-│            ↓                                │
-│     fetch(API_ENDPOINT, options)            │
-│            ↓                                │
-│     Server processes request                │
-│            ↓                                │
-│     Response received                       │
-│            ↓                                │
-│     Update UI (loadNotes, loadStats)        │
-│            ↓                                │
-│     DOM re-rendered with new data           │
-│                                             │
+│  User: Clicks "Delete" on a note            │
+│      ↓                                      │
+│  5. window.openai.callTool('delete_note')   │
+│      ↓                                      │
+│  6. Server deletes note                     │
+│      ↓                                      │
+│  7. window.openai.refreshWidget()           │
+│      ↓                                      │
+│  8. Widget refreshes, note is gone          │
 └─────────────────────────────────────────────┘
 ```
 
-#### **Widget State Management**
+#### **Widget Format Requirements**
 
-```
-Widget States:
-┌────────────────┐
-│   Loading      │  Initial state when widget loads
-│                │  Shows: "Loading notes..."
-└────────┬───────┘
-         │
-         ├─ Success ──> ┌────────────────┐
-         │              │   Loaded       │  Data fetched successfully
-         │              │                │  Shows: Notes list or empty state
-         │              └────────────────┘
-         │
-         └─ Error ────> ┌────────────────┐
-                        │   Error        │  Failed to fetch data
-                        │                │  Shows: "Failed to load notes"
-                        └────────────────┘
+For ChatGPT Apps SDK, widgets must:
 
-State Transitions:
-┌──────────┐  fetch()   ┌──────────┐  success  ┌──────────┐
-│ Loading  │ ────────> │ Fetching │ ───────> │  Loaded  │
-└──────────┘            └─────┬────┘           └──────────┘
-                              │                      ↓
-                              │ error          User Action
-                              │                      ↓
-                              ↓                ┌──────────┐
-                        ┌──────────┐           │ Updating │
-                        │  Error   │           └──────────┘
-                        └──────────┘                 ↓
-                                                Reload Data
-```
+1. **Be self-contained HTML**: All CSS and JavaScript embedded in one file
+2. **Use specific MIME type**: `text/html+skybridge` (handled by FastMCP)
+3. **Use widget:// URI scheme**: e.g., `widget://notes-list`
+4. **Be registered as MCP resources**: Use `@mcp.resource()` decorator
 
-#### **Key Widget Principles**
+**Example Widget Resource:**
 
-**1. Self-Contained**: All code in one HTML file
-```html
-<!DOCTYPE html>
-<html>
-  <head>
-    <style>/* All CSS here */</style>
-  </head>
-  <body>
-    <!-- All HTML here -->
-    <script>/* All JavaScript here */</script>
-  </body>
-</html>
-```
-
-**2. Configuration via Template Variables**: Use Python f-strings
 ```python
-html = f"""
-  <script>
-    const API_BASE = '{PUBLIC_URL}/api';  // ← Injected from Python
-  </script>
-"""
+@mcp.resource("widget://notes-list")
+def notes_list_widget() -> str:
+    """Widget to display and manage notes"""
+
+    notes = storage.list()
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            /* All CSS here */
+        </style>
+    </head>
+    <body>
+        <!-- HTML content -->
+        <script>
+            // Use window.openai API
+            async function deleteNote(id) {{
+                await window.openai.callTool({{
+                    name: 'delete_note',
+                    arguments: {{ noteId: id }}
+                }});
+                await window.openai.refreshWidget();
+            }}
+        </script>
+    </body>
+    </html>
+    """
+    return html
 ```
 
-**3. Progressive Enhancement**:
-```
-Base HTML → CSS Styling → JavaScript Interactivity
-  ↓            ↓              ↓
-Content    Presentation    Behavior
+#### **Returning Widget References from Tools**
+
+To display a widget, MCP tools return a `_meta` field with widget information:
+
+```python
+@mcp.tool()
+async def list_notes() -> types.CallToolResult:
+    """List all notes and show widget"""
+    notes = storage.list()
+
+    return types.CallToolResult(
+        content=[
+            types.TextContent(
+                type="text",
+                text=f"Found {len(notes)} notes"
+            )
+        ],
+        # Widget reference in _meta
+        _meta={
+            "widget": {
+                "resource_uri": "widget://notes-list"
+            }
+        }
+    )
 ```
 
-**4. Error Handling at Every Layer**:
-```javascript
-// Fetch with error handling
-try {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error('Failed');
-  const data = await response.json();
-  displayData(data);
-} catch (error) {
-  displayError(error.message);
-}
-```
-
-**5. Security**: Always escape user content
-```javascript
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;  // Safely sets text (no HTML parsing)
-  return div.innerHTML;    // Returns escaped HTML
-}
-```
+**_meta.widget fields:**
+- `resource_uri`: URI of the widget resource (required)
+- `title`: Widget title shown in ChatGPT (optional)
+- `invoking_message`: Message shown while loading (optional)
+- `invoked_message`: Message shown when displayed (optional)
 
 🎓 **You learned**:
-- The three layers of widget architecture (HTML, CSS, JavaScript)
-- How components are organized hierarchically
-- Communication patterns between widget and server
-- State management in widgets
-- Data flow from user action to UI update
-- Security and error handling best practices
+- How ChatGPT requests and displays widgets via Apps SDK
+- window.openai API methods (callTool, refreshWidget)
+- Communication patterns between ChatGPT, widgets, and MCP tools
+- Widget format requirements for Apps SDK
+- How to return widget references from MCP tools
 
 ### 5.4 Add Widget Resources to mcp_server.py
 
