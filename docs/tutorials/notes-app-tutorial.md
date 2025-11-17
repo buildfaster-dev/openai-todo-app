@@ -413,7 +413,182 @@ You should see the welcome message with all tools available.
 - How to configure unfree packages
 - How to add helpful shell hooks
 
-### 2.7 Create the Justfile - Step by Step
+### 2.7 Create pyproject.toml - Step by Step
+
+The `pyproject.toml` file defines your Python project configuration and dependencies. Let's build it section by section:
+
+**Step 1: Project Metadata**
+
+Create `pyproject.toml` with basic project information:
+
+```toml
+[project]
+name = "notes-app"
+version = "0.1.0"
+description = "A notes application with MCP integration for ChatGPT"
+requires-python = ">=3.11"
+```
+
+**What this does:**
+- `name`: Your project's name (used when installing)
+- `version`: Current version number
+- `description`: Brief description of the project
+- `requires-python`: Minimum Python version required
+
+**Step 2: Core Dependencies**
+
+Add the main dependencies your app needs:
+
+```toml
+dependencies = [
+    "fastapi>=0.115.0",      # Web framework for building APIs
+    "uvicorn[standard]>=0.32.0",  # ASGI server to run FastAPI
+    "mcp[fastapi]>=0.1.0",   # Model Context Protocol library
+    "pydantic>=2.9.0",       # Data validation using type hints
+    "python-dotenv>=1.0.0",  # Load environment variables from .env file
+]
+```
+
+**What each dependency does:**
+- **fastapi**: Modern web framework for building APIs with automatic OpenAPI documentation
+- **uvicorn**: Lightning-fast ASGI server to run your FastAPI app
+- **mcp[fastapi]**: Official MCP library with FastAPI integration
+- **pydantic**: Data validation using Python type hints (required by FastAPI)
+- **python-dotenv**: Loads configuration from `.env` files
+
+**Step 3: Development Dependencies**
+
+Add dependencies needed only during development:
+
+```toml
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",         # Testing framework
+    "pytest-asyncio>=0.24.0", # Async support for pytest
+    "httpx>=0.27.0",         # HTTP client for testing FastAPI
+    "ruff>=0.6.0",           # Fast Python linter and formatter
+]
+```
+
+**What each dev dependency does:**
+- **pytest**: Python testing framework
+- **pytest-asyncio**: Plugin to test async functions
+- **httpx**: HTTP client to test FastAPI endpoints
+- **ruff**: Fast linter and formatter (replaces black, isort, flake8)
+
+**Step 4: Build System**
+
+Define how to build your package:
+
+```toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+```
+
+**What this does:**
+- Specifies that we use `hatchling` to build the package
+- Modern build backend (alternative to setuptools)
+
+**Step 5: Hatchling Build Configuration**
+
+Configure hatchling to find your package:
+
+```toml
+[tool.hatch.build.targets.wheel]
+packages = ["src/notes_app"]  # Tell hatchling where to find the package
+```
+
+**What this does:**
+- `packages`: Specifies the directory path to your Python package
+- This fixes the "Unable to determine which files to ship" error
+- Required because our package is in `src/notes_app` instead of the project root
+
+**Step 6: Pytest Configuration**
+
+Configure pytest behavior:
+
+```toml
+[tool.pytest.ini_options]
+asyncio_mode = "auto"  # Automatically detect and run async tests
+testpaths = ["tests"]  # Where to find test files
+```
+
+**What this does:**
+- `asyncio_mode = "auto"`: Pytest automatically handles async tests
+- `testpaths`: Tells pytest where to look for tests
+
+**Step 7: Ruff Configuration**
+
+Configure the linter and formatter:
+
+```toml
+[tool.ruff]
+line-length = 100      # Maximum line length
+target-version = "py311"  # Python version to target
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]  # Which rules to enable
+ignore = ["E501"]      # Which rules to ignore
+```
+
+**What this does:**
+- `line-length`: Maximum characters per line (100 is a good balance)
+- `target-version`: Python version for compatibility checks
+- `select`: Enable specific rule categories (E=errors, F=pyflakes, I=isort, N=naming, W=warnings)
+- `ignore`: Disable specific rules (E501 = line too long, since we set line-length)
+
+**Complete pyproject.toml:**
+
+```toml
+[project]
+name = "notes-app"
+version = "0.1.0"
+description = "A notes application with MCP integration for ChatGPT"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "mcp[fastapi]>=0.1.0",
+    "pydantic>=2.9.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.27.0",
+    "ruff>=0.6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/notes_app"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
+```
+
+🎓 **You learned**:
+- How to structure a Python project with pyproject.toml
+- What each dependency does and why we need it
+- How to configure testing and linting tools
+- How to fix the "Unable to determine which files to ship" error
+
+### 2.8 Create the Justfile - Step by Step
 
 The `justfile` contains shortcuts for common development tasks. Let's build it gradually:
 
@@ -610,7 +785,7 @@ info:
 - What each command does and when to use it
 - How to structure commands with explanations
 
-### 2.8 Testing the Justfile Commands
+### 2.9 Testing the Justfile Commands
 
 Let's verify that all justfile commands work correctly. You don't need to complete all these steps now (we haven't created the source code yet), but here's how each command will be used:
 
@@ -687,176 +862,7 @@ touch tests/__init__.py
 mkdir -p docs
 ```
 
-### 3.2 Create pyproject.toml - Step by Step
-
-The `pyproject.toml` file defines your Python project configuration and dependencies. Let's build it section by section:
-
-**Step 1: Project Metadata**
-
-Create `pyproject.toml` with basic project information:
-
-```toml
-[project]
-name = "notes-app"
-version = "0.1.0"
-description = "A notes application with MCP integration for ChatGPT"
-requires-python = ">=3.11"
-```
-
-**What this does:**
-- `name`: Your project's name (used when installing)
-- `version`: Current version number
-- `description`: Brief description of the project
-- `requires-python`: Minimum Python version required
-
-**Step 2: Core Dependencies**
-
-Add the main dependencies your app needs:
-
-```toml
-dependencies = [
-    "fastapi>=0.115.0",      # Web framework for building APIs
-    "uvicorn[standard]>=0.32.0",  # ASGI server to run FastAPI
-    "mcp[fastapi]>=0.1.0",   # Model Context Protocol library
-    "pydantic>=2.9.0",       # Data validation using type hints
-    "python-dotenv>=1.0.0",  # Load environment variables from .env file
-]
-```
-
-**What each dependency does:**
-- **fastapi**: Modern web framework for building APIs with automatic OpenAPI documentation
-- **uvicorn**: Lightning-fast ASGI server to run your FastAPI app
-- **mcp[fastapi]**: Official MCP library with FastAPI integration
-- **pydantic**: Data validation using Python type hints (required by FastAPI)
-- **python-dotenv**: Loads configuration from `.env` files
-
-**Step 3: Development Dependencies**
-
-Add dependencies needed only during development:
-
-```toml
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.3.0",         # Testing framework
-    "pytest-asyncio>=0.24.0", # Async support for pytest
-    "httpx>=0.27.0",         # HTTP client for testing FastAPI
-    "ruff>=0.6.0",           # Fast Python linter and formatter
-]
-```
-
-**What each dev dependency does:**
-- **pytest**: Python testing framework
-- **pytest-asyncio**: Plugin to test async functions
-- **httpx**: HTTP client to test FastAPI endpoints
-- **ruff**: Fast linter and formatter (replaces black, isort, flake8)
-
-**Step 4: Build System**
-
-Define how to build your package:
-
-```toml
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-```
-
-**What this does:**
-- Specifies that we use `hatchling` to build the package
-- Modern build backend (alternative to setuptools)
-
-**Step 5: Hatchling Build Configuration**
-
-Configure hatchling to find your package:
-
-```toml
-[tool.hatch.build.targets.wheel]
-packages = ["src/notes_app"]  # Tell hatchling where to find the package
-```
-
-**What this does:**
-- `packages`: Specifies the directory path to your Python package
-- This fixes the "Unable to determine which files to ship" error
-- Required because our package is in `src/notes_app` instead of the project root
-
-**Step 6: Pytest Configuration**
-
-Configure pytest behavior:
-
-```toml
-[tool.pytest.ini_options]
-asyncio_mode = "auto"  # Automatically detect and run async tests
-testpaths = ["tests"]  # Where to find test files
-```
-
-**What this does:**
-- `asyncio_mode = "auto"`: Pytest automatically handles async tests
-- `testpaths`: Tells pytest where to look for tests
-
-**Step 7: Ruff Configuration**
-
-Configure the linter and formatter:
-
-```toml
-[tool.ruff]
-line-length = 100      # Maximum line length
-target-version = "py311"  # Python version to target
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "N", "W"]  # Which rules to enable
-ignore = ["E501"]      # Which rules to ignore
-```
-
-**What this does:**
-- `line-length`: Maximum characters per line (100 is a good balance)
-- `target-version`: Python version for compatibility checks
-- `select`: Enable specific rule categories (E=errors, F=pyflakes, I=isort, N=naming, W=warnings)
-- `ignore`: Disable specific rules (E501 = line too long, since we set line-length)
-
-**Complete pyproject.toml:**
-
-```toml
-[project]
-name = "notes-app"
-version = "0.1.0"
-description = "A notes application with MCP integration for ChatGPT"
-requires-python = ">=3.11"
-dependencies = [
-    "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.32.0",
-    "mcp[fastapi]>=0.1.0",
-    "pydantic>=2.9.0",
-    "python-dotenv>=1.0.0",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.3.0",
-    "pytest-asyncio>=0.24.0",
-    "httpx>=0.27.0",
-    "ruff>=0.6.0",
-]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/notes_app"]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
-
-[tool.ruff]
-line-length = 100
-target-version = "py311"
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "N", "W"]
-ignore = ["E501"]
-```
-
-### 3.3 Install Dependencies
+### 3.2 Install Dependencies
 
 Now let's set up the Python environment and install dependencies.
 
@@ -898,11 +904,11 @@ Installed XX packages in XXms
 ✅ **Checkpoint**: You should see all dependencies installed without errors. If you see an error about "Unable to determine which files to ship", make sure your `pyproject.toml` includes the `[tool.hatch.build.targets.wheel]` section with `packages = ["src/notes_app"]`.
 
 🎓 **You learned**:
-- How to structure a Python project with pyproject.toml
-- What each dependency does and why we need it
-- How to configure testing and linting tools
+- How to initialize a Python virtual environment
+- How to install dependencies using uv
+- How to verify successful installation
 
-### 3.4 Create Data Models - Step by Step
+### 3.3 Create Data Models - Step by Step
 
 Data models define the structure of your data. Let's build `src/notes_app/models.py` gradually:
 
@@ -1080,7 +1086,7 @@ class NoteStats(BaseModel):
 - How to use Field for validation and documentation
 - How to use Optional for nullable fields
 
-### 3.5 Create Storage Layer - Step by Step
+### 3.4 Create Storage Layer - Step by Step
 
 The storage layer handles data persistence. We'll use in-memory storage for simplicity. Create `src/notes_app/storage.py`:
 
@@ -1436,7 +1442,7 @@ storage = NotesStorage()
 - How to use Python dictionaries for in-memory storage
 - How to calculate statistics from stored data
 
-### 3.6 Create the MCP Server - Understanding the Architecture
+### 3.5 Create the MCP Server - Understanding the Architecture
 
 Before diving into code, let's understand the MCP server architecture:
 
