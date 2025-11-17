@@ -4,6 +4,21 @@ Este es el código de ejemplo completo para el [Tutorial Hola Mundo](../../docs/
 
 ## 🚀 Inicio Rápido
 
+### Opción 1: Con Nix (Recomendado)
+
+```bash
+# 1. Entrar al entorno Nix
+nix develop
+
+# 2. Inicializar el proyecto
+just init
+
+# 3. Ejecutar el servidor
+just dev
+```
+
+### Opción 2: Manual
+
 ```bash
 # 1. Copiar variables de entorno
 cp .env.example .env
@@ -16,7 +31,7 @@ uv sync
 # 3. Ejecutar el servidor
 just dev
 # O sin just:
-uv run uvicorn src.hello_app.main:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn src.helloworld_app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 El servidor estará disponible en: http://localhost:8000
@@ -24,16 +39,18 @@ El servidor estará disponible en: http://localhost:8000
 ## 📁 Estructura
 
 ```
-hello-world-app/
-├── src/
-│   └── hello_app/
-│       ├── __init__.py      # Módulo Python
-│       ├── main.py          # FastAPI + integración MCP
-│       └── mcp_server.py    # Servidor MCP con herramientas y widgets
+openai-helloworld-app/
+├── flake.nix                # Configuración de entorno Nix
 ├── pyproject.toml           # Dependencias del proyecto
 ├── justfile                 # Comandos útiles
 ├── .env.example             # Template de variables de entorno
-└── README.md                # Este archivo
+├── .gitignore              # Archivos ignorados por git
+├── README.md                # Este archivo
+└── src/
+    └── helloworld_app/
+        ├── __init__.py      # Módulo Python
+        ├── main.py          # FastAPI + integración MCP
+        └── mcp_server.py    # Servidor MCP con herramientas y widgets
 ```
 
 ## 🧪 Probar
@@ -86,16 +103,18 @@ curl -X POST http://localhost:8000/mcp \
 
 ## 🌍 Conectar con ChatGPT
 
-1. **Instalar y ejecutar ngrok:**
+1. **Iniciar túnel ngrok:**
    ```bash
+   just tunnel
+   # O directamente:
    ngrok http 8000
    ```
 
-2. **Copiar la URL de ngrok** (ej: `https://abc123.ngrok.app`)
+2. **Copiar la URL de ngrok** (ej: `https://abc123-45-67-89-10.ngrok-free.app`)
 
 3. **Actualizar .env:**
    ```bash
-   PUBLIC_URL=https://abc123.ngrok.app
+   PUBLIC_URL=https://abc123-45-67-89-10.ngrok-free.app
    ```
 
 4. **Reiniciar el servidor**
@@ -103,7 +122,7 @@ curl -X POST http://localhost:8000/mcp \
 5. **Ir a OpenAI Platform:**
    - Visita: https://platform.openai.com/playground/apps
    - Crea una nueva app
-   - MCP Server URL: `https://abc123.ngrok.app/mcp`
+   - MCP Server URL: `https://abc123-45-67-89-10.ngrok-free.app/mcp`
 
 6. **Probar en ChatGPT:**
    ```
@@ -129,6 +148,7 @@ Para el tutorial completo paso a paso, visita:
 - ✅ Integrar MCP con FastAPI
 - ✅ Exponer tu servidor con ngrok
 - ✅ Conectar con ChatGPT
+- ✅ Configurar entornos reproducibles con Nix
 
 ## 🚀 Siguientes Pasos
 
