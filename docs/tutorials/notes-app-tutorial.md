@@ -2176,7 +2176,461 @@ Tool processes request
 Widget updates
 ```
 
-### 5.3 Add Widget Resources to mcp_server.py
+### 5.3 Widget Component Architecture
+
+Let's break down the internal architecture of a widget. Understanding these components is crucial for building effective interactive interfaces.
+
+**Widget Structure:**
+
+```
+Widget (Single HTML File)
+┌─────────────────────────────────────────────────────────┐
+│                      widget://notes-list                │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌────────────────────────────────────────────────┐   │
+│  │  1. HTML Structure Layer                       │   │
+│  ├────────────────────────────────────────────────┤   │
+│  │  • Container elements                          │   │
+│  │  • Header section                              │   │
+│  │  • Stats cards                                 │   │
+│  │  • Form inputs (title, content)                │   │
+│  │  • Dynamic content containers                  │   │
+│  │  • Interactive buttons                         │   │
+│  └────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌────────────────────────────────────────────────┐   │
+│  │  2. CSS Styling Layer                          │   │
+│  ├────────────────────────────────────────────────┤   │
+│  │  • Layout (flexbox, grid)                      │   │
+│  │  • Color scheme & gradients                    │   │
+│  │  • Typography & spacing                        │   │
+│  │  • Responsive design                           │   │
+│  │  • Hover & transition effects                  │   │
+│  │  • State styles (loading, error, empty)        │   │
+│  └────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌────────────────────────────────────────────────┐   │
+│  │  3. JavaScript Logic Layer                     │   │
+│  ├────────────────────────────────────────────────┤   │
+│  │  • Configuration (API_BASE)                    │   │
+│  │  • Event listeners                             │   │
+│  │  • Data fetching functions                     │   │
+│  │  • Rendering functions                         │   │
+│  │  • User interaction handlers                   │   │
+│  │  • Error handling                              │   │
+│  └────────────────────────────────────────────────┘   │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Detailed Component Breakdown:**
+
+#### **Layer 1: HTML Structure Components**
+
+```
+HTML Elements Hierarchy:
+┌──────────────────────────────────┐
+│   <body>                         │
+│   └── <div class="container">   │
+│       ├── Header Section         │
+│       │   ├── <h1> Title         │
+│       │   └── <p> Subtitle       │
+│       │                          │
+│       ├── Stats Section          │
+│       │   └── <div id="stats">   │
+│       │       ├── Stat Card 1    │
+│       │       ├── Stat Card 2    │
+│       │       └── Stat Card 3    │
+│       │                          │
+│       ├── Create Section         │
+│       │   ├── <h2> Section Title │
+│       │   ├── Input: Title       │
+│       │   ├── Textarea: Content  │
+│       │   └── Button: Create     │
+│       │                          │
+│       └── Notes Container        │
+│           └── <div id="notes-container">
+│               └── Dynamic Notes  │
+│                   ├── Note Card 1│
+│                   ├── Note Card 2│
+│                   └── Note Card N│
+└──────────────────────────────────┘
+```
+
+**Key HTML Elements:**
+
+1. **Container Div**: Main wrapper for layout control
+2. **Header Section**: Title and description
+3. **Stats Section**: Real-time statistics display
+4. **Create Section**: Form for new note creation
+5. **Notes Container**: Dynamic list of note cards
+6. **Interactive Elements**: Buttons, inputs, textareas
+
+#### **Layer 2: CSS Styling Components**
+
+```
+CSS Organization:
+┌──────────────────────────────────────┐
+│  1. Reset & Base Styles              │
+│     • Universal box-sizing           │
+│     • Zero margins/padding           │
+│     • Font family                    │
+├──────────────────────────────────────┤
+│  2. Layout Styles                    │
+│     • Container max-width            │
+│     • Flexbox for stats              │
+│     • Grid for note cards            │
+├──────────────────────────────────────┤
+│  3. Component Styles                 │
+│     • Header (text-align, color)     │
+│     • Stat Cards (shadow, border)    │
+│     • Forms (input, textarea)        │
+│     • Buttons (primary, secondary)   │
+│     • Note Cards (padding, shadow)   │
+├──────────────────────────────────────┤
+│  4. State Styles                     │
+│     • .loading (centered spinner)    │
+│     • .error (red background)        │
+│     • .empty-state (placeholder)     │
+│     • :hover (transform, shadow)     │
+│     • :focus (border color)          │
+├──────────────────────────────────────┤
+│  5. Visual Effects                   │
+│     • Gradients (background)         │
+│     • Shadows (box-shadow)           │
+│     • Transitions (all 0.3s)         │
+│     • Transforms (translateY)        │
+└──────────────────────────────────────┘
+```
+
+**CSS Design Patterns:**
+
+```css
+/* Pattern 1: Gradient Background */
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+/* Pattern 2: Card Shadow */
+box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+
+/* Pattern 3: Hover Effect */
+.note-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+/* Pattern 4: Responsive Layout */
+.stats {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;  /* Mobile-friendly */
+}
+```
+
+#### **Layer 3: JavaScript Logic Components**
+
+```
+JavaScript Architecture:
+┌─────────────────────────────────────────┐
+│  Configuration                          │
+│  ┌───────────────────────────────────┐ │
+│  │ const API_BASE = '{PUBLIC_URL}'   │ │
+│  └───────────────────────────────────┘ │
+├─────────────────────────────────────────┤
+│  Initialization                         │
+│  ┌───────────────────────────────────┐ │
+│  │ window.addEventListener('load')   │ │
+│  │   → loadNotes()                   │ │
+│  │   → loadStats()                   │ │
+│  └───────────────────────────────────┘ │
+├─────────────────────────────────────────┤
+│  Data Fetching Layer                    │
+│  ┌───────────────────────────────────┐ │
+│  │ async loadNotes()                 │ │
+│  │   → fetch(`${API_BASE}/notes`)    │ │
+│  │   → displayNotes(data.notes)      │ │
+│  │                                   │ │
+│  │ async loadStats()                 │ │
+│  │   → fetch(`${API_BASE}/stats`)    │ │
+│  │   → displayStats(stats)           │ │
+│  └───────────────────────────────────┘ │
+├─────────────────────────────────────────┤
+│  Rendering Layer                        │
+│  ┌───────────────────────────────────┐ │
+│  │ displayNotes(notes)               │ │
+│  │   → Check if empty                │ │
+│  │   → Generate HTML for each note   │ │
+│  │   → Inject into container         │ │
+│  │                                   │ │
+│  │ displayStats(stats)               │ │
+│  │   → Generate stat cards HTML      │ │
+│  │   → Update stats container        │ │
+│  └───────────────────────────────────┘ │
+├─────────────────────────────────────────┤
+│  User Interaction Layer                 │
+│  ┌───────────────────────────────────┐ │
+│  │ async createNote()                │ │
+│  │   → Validate inputs               │ │
+│  │   → POST to /api/notes            │ │
+│  │   → Reload notes & stats          │ │
+│  │                                   │ │
+│  │ async editNote(noteId)            │ │
+│  │   → Prompt for new data           │ │
+│  │   → PATCH to /api/notes/:id       │ │
+│  │   → Reload notes & stats          │ │
+│  │                                   │ │
+│  │ async deleteNote(noteId)          │ │
+│  │   → Confirm deletion              │ │
+│  │   → DELETE to /api/notes/:id      │ │
+│  │   → Reload notes & stats          │ │
+│  └───────────────────────────────────┘ │
+├─────────────────────────────────────────┤
+│  Utility Layer                          │
+│  ┌───────────────────────────────────┐ │
+│  │ escapeHtml(text)                  │ │
+│  │   → Prevent XSS attacks           │ │
+│  │   → Safely render user content    │ │
+│  └───────────────────────────────────┘ │
+└─────────────────────────────────────────┘
+```
+
+**JavaScript Function Flow:**
+
+```
+Page Load Sequence:
+1. window.addEventListener('load') fires
+2. loadNotes() → fetch data → displayNotes()
+3. loadStats() → fetch data → displayStats()
+
+User Creates Note:
+1. User fills form → clicks "Create Note"
+2. createNote() → validate inputs
+3. fetch POST → server creates note
+4. loadNotes() → refresh display
+5. loadStats() → update counters
+
+User Edits Note:
+1. User clicks "Edit" button
+2. editNote(id) → prompt for changes
+3. fetch PATCH → server updates note
+4. loadNotes() → refresh display
+5. loadStats() → update counters
+
+User Deletes Note:
+1. User clicks "Delete" button
+2. deleteNote(id) → confirm action
+3. fetch DELETE → server removes note
+4. loadNotes() → refresh display
+5. loadStats() → update counters
+```
+
+#### **Communication Patterns**
+
+**Pattern 1: Widget ↔ REST API**
+
+```
+┌──────────────┐                    ┌──────────────┐
+│   Widget     │                    │  REST API    │
+│  JavaScript  │                    │  Endpoints   │
+└──────┬───────┘                    └──────┬───────┘
+       │                                   │
+       │  GET /api/notes                   │
+       ├──────────────────────────────────>│
+       │                                   │
+       │  JSON: { notes: [...] }           │
+       │<──────────────────────────────────┤
+       │                                   │
+       │  POST /api/notes                  │
+       │  Body: { title, content }         │
+       ├──────────────────────────────────>│
+       │                                   │
+       │  JSON: { id, title, content, ... }│
+       │<──────────────────────────────────┤
+       │                                   │
+       │  PATCH /api/notes/:id             │
+       │  Body: { title?, content? }       │
+       ├──────────────────────────────────>│
+       │                                   │
+       │  JSON: { updated note }           │
+       │<──────────────────────────────────┤
+       │                                   │
+       │  DELETE /api/notes/:id            │
+       ├──────────────────────────────────>│
+       │                                   │
+       │  JSON: { success: true }          │
+       │<──────────────────────────────────┤
+       │                                   │
+```
+
+**Pattern 2: MCP Tool → Widget Resource**
+
+```
+┌──────────────┐         ┌──────────────┐         ┌──────────────┐
+│   ChatGPT    │         │  MCP Tool    │         │   Widget     │
+│              │         │ (list_notes) │         │  Resource    │
+└──────┬───────┘         └──────┬───────┘         └──────┬───────┘
+       │                        │                        │
+       │  Call list_notes       │                        │
+       ├───────────────────────>│                        │
+       │                        │                        │
+       │  Return:               │                        │
+       │  {                     │                        │
+       │    notes: [...],       │                        │
+       │    _meta: {            │                        │
+       │      widget: {         │                        │
+       │        resource_uri    │                        │
+       │      }                 │                        │
+       │    }                   │                        │
+       │  }                     │                        │
+       │<───────────────────────┤                        │
+       │                        │                        │
+       │  Request widget://notes-list                    │
+       ├────────────────────────────────────────────────>│
+       │                        │                        │
+       │  Return HTML (with embedded CSS & JS)           │
+       │<────────────────────────────────────────────────┤
+       │                        │                        │
+       │  Display Widget        │                        │
+       │                        │                        │
+```
+
+**Pattern 3: Widget Internal Data Flow**
+
+```
+Data Flow Inside Widget:
+┌─────────────────────────────────────────────┐
+│                                             │
+│  1. Initial Load                            │
+│     loadNotes() ──> fetch() ──> response    │
+│                          ↓                  │
+│                     JSON data               │
+│                          ↓                  │
+│                  displayNotes(data)         │
+│                          ↓                  │
+│               Generate HTML string          │
+│                          ↓                  │
+│            innerHTML = generatedHTML        │
+│                          ↓                  │
+│                  DOM Updated                │
+│                                             │
+├─────────────────────────────────────────────┤
+│                                             │
+│  2. User Interaction                        │
+│     User clicks button                      │
+│            ↓                                │
+│     Event handler fires                     │
+│            ↓                                │
+│     Validate & prepare data                 │
+│            ↓                                │
+│     fetch(API_ENDPOINT, options)            │
+│            ↓                                │
+│     Server processes request                │
+│            ↓                                │
+│     Response received                       │
+│            ↓                                │
+│     Update UI (loadNotes, loadStats)        │
+│            ↓                                │
+│     DOM re-rendered with new data           │
+│                                             │
+└─────────────────────────────────────────────┘
+```
+
+#### **Widget State Management**
+
+```
+Widget States:
+┌────────────────┐
+│   Loading      │  Initial state when widget loads
+│                │  Shows: "Loading notes..."
+└────────┬───────┘
+         │
+         ├─ Success ──> ┌────────────────┐
+         │              │   Loaded       │  Data fetched successfully
+         │              │                │  Shows: Notes list or empty state
+         │              └────────────────┘
+         │
+         └─ Error ────> ┌────────────────┐
+                        │   Error        │  Failed to fetch data
+                        │                │  Shows: "Failed to load notes"
+                        └────────────────┘
+
+State Transitions:
+┌──────────┐  fetch()   ┌──────────┐  success  ┌──────────┐
+│ Loading  │ ────────> │ Fetching │ ───────> │  Loaded  │
+└──────────┘            └─────┬────┘           └──────────┘
+                              │                      ↓
+                              │ error          User Action
+                              │                      ↓
+                              ↓                ┌──────────┐
+                        ┌──────────┐           │ Updating │
+                        │  Error   │           └──────────┘
+                        └──────────┘                 ↓
+                                                Reload Data
+```
+
+#### **Key Widget Principles**
+
+**1. Self-Contained**: All code in one HTML file
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>/* All CSS here */</style>
+  </head>
+  <body>
+    <!-- All HTML here -->
+    <script>/* All JavaScript here */</script>
+  </body>
+</html>
+```
+
+**2. Configuration via Template Variables**: Use Python f-strings
+```python
+html = f"""
+  <script>
+    const API_BASE = '{PUBLIC_URL}/api';  // ← Injected from Python
+  </script>
+"""
+```
+
+**3. Progressive Enhancement**:
+```
+Base HTML → CSS Styling → JavaScript Interactivity
+  ↓            ↓              ↓
+Content    Presentation    Behavior
+```
+
+**4. Error Handling at Every Layer**:
+```javascript
+// Fetch with error handling
+try {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error('Failed');
+  const data = await response.json();
+  displayData(data);
+} catch (error) {
+  displayError(error.message);
+}
+```
+
+**5. Security**: Always escape user content
+```javascript
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;  // Safely sets text (no HTML parsing)
+  return div.innerHTML;    // Returns escaped HTML
+}
+```
+
+🎓 **You learned**:
+- The three layers of widget architecture (HTML, CSS, JavaScript)
+- How components are organized hierarchically
+- Communication patterns between widget and server
+- State management in widgets
+- Data flow from user action to UI update
+- Security and error handling best practices
+
+### 5.4 Add Widget Resources to mcp_server.py
 
 Update `src/notes_app/mcp_server.py` to add widget support. Add this at the end of the file:
 
@@ -2677,7 +3131,7 @@ def list_notes() -> dict:
 - Empty state when no notes exist
 - Real-time updates after actions
 
-### 5.4 Test the Widget
+### 5.5 Test the Widget
 
 **Step 1: Restart the server**
 
