@@ -581,72 +581,54 @@ result
 
 ### 2.10 Crear justfile - Paso a Paso
 
-El `justfile` es como un Makefile pero más simple. Define comandos útiles para tu proyecto.
+El `justfile` es como un Makefile pero más simple. Define comandos útiles para tu proyecto. Vamos a crearlo **incrementalmente**, validando cada comando antes de agregar el siguiente.
 
-**Requerimientos previos:**
-Antes de crear el `justfile`, asegúrate de tener:
+#### 2.10.1 Comando `info` - Primer Paso
+
+**Prerequisitos:**
+- ✅ Ninguno (este comando solo imprime información)
+
+**Crear `justfile`** con el primer comando:
+
+```makefile
+# Mostrar información del proyecto
+info:
+    @echo "👋 Hola Mundo App"
+    @echo "═══════════════════════════════════"
+    @echo "📍 Servidor: http://localhost:8000"
+    @echo "📍 MCP Endpoint: http://localhost:8000/mcp"
+    @echo "📍 Docs API: http://localhost:8000/docs"
+```
+
+**Qué hace esto:**
+- El `@` oculta el comando y solo muestra el output
+- Imprime información útil sobre el proyecto
+
+**✅ Validar ahora:**
+
+```bash
+just info
+```
+
+**Salida esperada:**
+```
+👋 Hola Mundo App
+═══════════════════════════════════
+📍 Servidor: http://localhost:8000
+📍 MCP Endpoint: http://localhost:8000/mcp
+📍 Docs API: http://localhost:8000/docs
+```
+
+Si ves este output, ¡tu `justfile` funciona! ✅
+
+#### 2.10.2 Comando `init` - Inicializar Proyecto
+
+**Prerequisitos:**
 - ✅ `pyproject.toml` (creado en sección 2.7)
 - ✅ `.env.example` (creado en sección 2.8)
 - ✅ Entorno Nix activo (entrado con `nix develop` en sección 2.6)
 
-**Paso 1: Comando de Inicialización**
-
-Crea `justfile` con un comando para inicializar el proyecto:
-
-```makefile
-# Inicializar el proyecto (primera vez)
-init:
-    @echo "📦 Creando entorno virtual..."
-    uv venv
-    @echo "📥 Instalando dependencias..."
-    uv sync
-    @echo "📝 Configurando variables de entorno..."
-    cp .env.example .env
-    @echo "✅ Proyecto inicializado. Usa 'just dev' para empezar."
-```
-
-**Qué hace esto:**
-- Crea un entorno virtual Python con `uv venv`
-- Instala las dependencias con `uv sync`
-- Copia el template de variables de entorno
-- El `@` hace que no se muestre el comando, solo el output
-
-**Paso 2: Comando de Desarrollo**
-
-Agrega comando para iniciar el servidor de desarrollo:
-
-```makefile
-# Iniciar servidor de desarrollo
-dev:
-    @echo "🚀 Iniciando servidor de desarrollo..."
-    uv run uvicorn src.helloworld_app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-**Qué hace esto:**
-- Usa `uv run` para ejecutar uvicorn en el entorno virtual
-- `--reload`: Reinicia automáticamente cuando cambias código
-- `--host 0.0.0.0`: Permite conexiones desde cualquier interfaz
-- `--port 8000`: Escucha en el puerto 8000
-
-**Paso 3: Comando de Túnel**
-
-Agrega comando para iniciar ngrok:
-
-```makefile
-# Iniciar túnel ngrok
-tunnel:
-    @echo "🌍 Iniciando túnel ngrok..."
-    @echo "⚠️  Copia la URL HTTPS y actualiza PUBLIC_URL en .env"
-    ngrok http 8000
-```
-
-**Qué hace esto:**
-- Inicia ngrok para exponer tu servidor local
-- Muestra recordatorio para actualizar la variable de entorno
-
-**Paso 4: Comando de Información**
-
-Agrega comando para mostrar información útil:
+**Agregar** el comando `init` a tu `justfile`:
 
 ```makefile
 # Mostrar información del proyecto
@@ -656,17 +638,7 @@ info:
     @echo "📍 Servidor: http://localhost:8000"
     @echo "📍 MCP Endpoint: http://localhost:8000/mcp"
     @echo "📍 Docs API: http://localhost:8000/docs"
-    @echo ""
-    @echo "Comandos disponibles:"
-    @echo "  just init    - Inicializar proyecto"
-    @echo "  just dev     - Servidor de desarrollo"
-    @echo "  just tunnel  - Iniciar ngrok"
-    @echo "  just info    - Mostrar esta información"
-```
 
-**`justfile` Completo:**
-
-```makefile
 # Inicializar el proyecto (primera vez)
 init:
     @echo "📦 Creando entorno virtual..."
@@ -675,66 +647,111 @@ init:
     uv sync
     @echo "📝 Configurando variables de entorno..."
     cp .env.example .env
-    @echo "✅ Proyecto inicializado. Usa 'just dev' para empezar."
-
-# Iniciar servidor de desarrollo
-dev:
-    @echo "🚀 Iniciando servidor de desarrollo..."
-    uv run uvicorn src.helloworld_app.main:app --reload --host 0.0.0.0 --port 8000
-
-# Iniciar túnel ngrok
-tunnel:
-    @echo "🌍 Iniciando túnel ngrok..."
-    @echo "⚠️  Copia la URL HTTPS y actualiza PUBLIC_URL en .env"
-    ngrok http 8000
-
-# Mostrar información del proyecto
-info:
-    @echo "👋 Hola Mundo App"
-    @echo "═══════════════════════════════════"
-    @echo "📍 Servidor: http://localhost:8000"
-    @echo "📍 MCP Endpoint: http://localhost:8000/mcp"
-    @echo "📍 Docs API: http://localhost:8000/docs"
-    @echo ""
-    @echo "Comandos disponibles:"
-    @echo "  just init    - Inicializar proyecto"
-    @echo "  just dev     - Servidor de desarrollo"
-    @echo "  just tunnel  - Iniciar ngrok"
-    @echo "  just info    - Mostrar esta información"
+    @echo "✅ Proyecto inicializado."
 ```
 
-🎓 **Aprendiste**:
-- Cómo crear un `justfile` para automatizar tareas
-- Comandos útiles para desarrollo
-- Cómo usar `uv` para gestionar dependencias
-- Qué archivos necesita el `justfile` para funcionar correctamente
+**Qué hace esto:**
+- `uv venv`: Crea un entorno virtual Python en `.venv/`
+- `uv sync`: Instala dependencias desde `pyproject.toml`
+- `cp .env.example .env`: Copia template de variables de entorno
 
-### 2.11 Inicializar el Proyecto
-
-Ahora que todos los archivos de configuración están listos, podemos inicializar el proyecto:
+**✅ Validar ahora:**
 
 ```bash
-# Inicializar el proyecto (crea .env, instala dependencias)
 just init
 ```
-
-**Esto:**
-1. Crea el entorno virtual con `uv venv`
-2. Instala las dependencias definidas en `pyproject.toml`
-3. Copia `.env.example` a `.env` para configuración local
 
 **Salida esperada:**
 ```
 📦 Creando entorno virtual...
 📥 Instalando dependencias...
 📝 Configurando variables de entorno...
-✅ Proyecto inicializado. Usa 'just dev' para empezar.
+✅ Proyecto inicializado.
+```
+
+**Verificar que se crearon los archivos:**
+```bash
+ls -la .venv/    # Debe existir el entorno virtual
+ls -la .env      # Debe existir el archivo .env
+```
+
+Si ves estos archivos, ¡tu proyecto está inicializado! ✅
+
+#### 2.10.3 Comando `tunnel` - Para Más Adelante
+
+**Prerequisitos:**
+- ✅ ngrok instalado (ya está en tu entorno Nix)
+
+**Agregar** el comando `tunnel` a tu `justfile`:
+
+```makefile
+# Mostrar información del proyecto
+info:
+    @echo "👋 Hola Mundo App"
+    @echo "═══════════════════════════════════"
+    @echo "📍 Servidor: http://localhost:8000"
+    @echo "📍 MCP Endpoint: http://localhost:8000/mcp"
+    @echo "📍 Docs API: http://localhost:8000/docs"
+
+# Inicializar el proyecto (primera vez)
+init:
+    @echo "📦 Creando entorno virtual..."
+    uv venv
+    @echo "📥 Instalando dependencias..."
+    uv sync
+    @echo "📝 Configurando variables de entorno..."
+    cp .env.example .env
+    @echo "✅ Proyecto inicializado."
+
+# Iniciar túnel ngrok
+tunnel:
+    @echo "🌍 Iniciando túnel ngrok..."
+    @echo "⚠️  Copia la URL HTTPS y actualiza PUBLIC_URL en .env"
+    ngrok http 8000
+```
+
+**Qué hace esto:**
+- Inicia ngrok para exponer tu servidor local a Internet
+- Necesario para que ChatGPT acceda a tu app en desarrollo
+
+**⏭️ NO validar ahora** (lo haremos en la Parte 5 cuando tengamos el servidor corriendo)
+
+**Tu `justfile` actual debe verse así:**
+
+```makefile
+# Mostrar información del proyecto
+info:
+    @echo "👋 Hola Mundo App"
+    @echo "═══════════════════════════════════"
+    @echo "📍 Servidor: http://localhost:8000"
+    @echo "📍 MCP Endpoint: http://localhost:8000/mcp"
+    @echo "📍 Docs API: http://localhost:8000/docs"
+
+# Inicializar el proyecto (primera vez)
+init:
+    @echo "📦 Creando entorno virtual..."
+    uv venv
+    @echo "📥 Instalando dependencias..."
+    uv sync
+    @echo "📝 Configurando variables de entorno..."
+    cp .env.example .env
+    @echo "✅ Proyecto inicializado."
+
+# Iniciar túnel ngrok
+tunnel:
+    @echo "🌍 Iniciando túnel ngrok..."
+    @echo "⚠️  Copia la URL HTTPS y actualiza PUBLIC_URL en .env"
+    ngrok http 8000
 ```
 
 🎓 **Aprendiste**:
-- El orden correcto de inicialización del proyecto
-- Cómo `uv` gestiona entornos virtuales y dependencias
-- La diferencia entre archivos de configuración (template) y archivos locales
+- Cómo crear un `justfile` incrementalmente
+- Validar cada comando antes de continuar
+- El comando `info` imprime información útil
+- El comando `init` configura tu proyecto
+- El comando `tunnel` se usará más adelante
+
+**Nota importante:** El comando `dev` lo agregaremos **después** de crear los archivos Python en la Parte 3, porque requiere que exista `src/helloworld_app/main.py`.
 
 ---
 
@@ -1381,47 +1398,80 @@ if __name__ == "__main__":
 - Cómo montar el servidor MCP en un endpoint
 - La estructura completa de un proyecto MCP
 
----
+### 3.5 Agregar Comando `dev` al justfile
 
-## Parte 4: Probando Localmente
+Ahora que tenemos todos los archivos Python creados, podemos agregar el comando `dev` al justfile.
 
-**⚠️ Prerequisitos:**
-Antes de continuar con esta sección, asegúrate de haber completado la **Parte 3 completa**:
-- ✅ Estructura de carpetas creada (sección 3.1): `src/helloworld_app/`
-- ✅ Archivo `__init__.py` creado (sección 3.2)
-- ✅ Archivo `mcp_server.py` creado (sección 3.3)
-- ✅ Archivo `main.py` creado (sección 3.4)
+**Prerequisitos:**
+- ✅ `src/helloworld_app/__init__.py` (creado en sección 3.2)
+- ✅ `src/helloworld_app/mcp_server.py` (creado en sección 3.3)
+- ✅ `src/helloworld_app/main.py` (creado en sección 3.4)
 
-Si ejecutas `just dev` sin estos archivos, obtendrás el error: `ModuleNotFoundError: No module named 'src'`
+**Agregar** el comando `dev` a tu `justfile` existente. Tu `justfile` completo debe verse así:
 
-### 4.1 Iniciar el Servidor
+```makefile
+# Mostrar información del proyecto
+info:
+    @echo "👋 Hola Mundo App"
+    @echo "═══════════════════════════════════"
+    @echo "📍 Servidor: http://localhost:8000"
+    @echo "📍 MCP Endpoint: http://localhost:8000/mcp"
+    @echo "📍 Docs API: http://localhost:8000/docs"
+
+# Inicializar el proyecto (primera vez)
+init:
+    @echo "📦 Creando entorno virtual..."
+    uv venv
+    @echo "📥 Instalando dependencias..."
+    uv sync
+    @echo "📝 Configurando variables de entorno..."
+    cp .env.example .env
+    @echo "✅ Proyecto inicializado."
+
+# Iniciar servidor de desarrollo
+dev:
+    @echo "🚀 Iniciando servidor de desarrollo..."
+    uv run uvicorn src.helloworld_app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Iniciar túnel ngrok
+tunnel:
+    @echo "🌍 Iniciando túnel ngrok..."
+    @echo "⚠️  Copia la URL HTTPS y actualiza PUBLIC_URL en .env"
+    ngrok http 8000
+```
+
+**Qué hace el comando `dev`:**
+- `uv run`: Ejecuta el comando en el entorno virtual
+- `uvicorn`: Servidor ASGI para ejecutar FastAPI
+- `src.helloworld_app.main:app`: Ruta al objeto FastAPI (app en main.py)
+- `--reload`: Reinicia automáticamente cuando cambias código
+- `--host 0.0.0.0`: Permite conexiones desde cualquier interfaz de red
+- `--port 8000`: Escucha en el puerto 8000
+
+**✅ Validar ahora:**
 
 ```bash
 just dev
 ```
 
-Deberías ver:
-
+**Salida esperada:**
 ```
 🚀 Iniciando servidor de desarrollo...
+INFO:     Will watch for changes in these directories: ['/ruta/a/tu/proyecto']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process
 INFO:     Started server process
 INFO:     Application startup complete.
 ```
 
-**¡Felicidades! Tu servidor MCP está corriendo.** 🎉
+**Verificar que el servidor funciona:**
 
-### 4.2 Verificar que el Servidor Está Vivo
-
-Abre otra terminal y ejecuta:
-
+En otra terminal, ejecuta:
 ```bash
 curl http://localhost:8000/
 ```
 
 Deberías ver:
-
 ```json
 {
   "message": "Hola Mundo App está corriendo",
@@ -1430,7 +1480,33 @@ Deberías ver:
 }
 ```
 
-### 4.3 Listar Herramientas MCP Disponibles
+Si ves este JSON, ¡tu servidor está corriendo correctamente! ✅
+
+**Detener el servidor:** Presiona `Ctrl+C` en la terminal donde corre `just dev`.
+
+🎓 **Aprendiste**:
+- Cuándo agregar el comando `dev` (después de crear los archivos Python)
+- Cómo uvicorn ejecuta aplicaciones FastAPI
+- Cómo validar que el servidor está corriendo
+- Cómo detener el servidor de desarrollo
+
+---
+
+## Parte 4: Probando el Protocolo MCP
+
+**⚠️ Prerequisitos:**
+- ✅ Servidor corriendo con `just dev` (validado en sección 3.5)
+- ✅ Terminal adicional abierta para ejecutar comandos `curl`
+
+En esta parte vamos a probar directamente el **protocolo MCP** usando JSON-RPC 2.0.
+
+### 4.1 Listar Herramientas MCP Disponibles
+
+**Prerequisitos:**
+- ✅ Servidor corriendo en terminal 1 con `just dev`
+- ✅ Terminal 2 abierta para ejecutar curl
+
+**Ejecutar la solicitud JSON-RPC:**
 
 ```bash
 curl -X POST http://localhost:8000/mcp \
@@ -1442,9 +1518,26 @@ curl -X POST http://localhost:8000/mcp \
   }'
 ```
 
-Deberías ver la herramienta `say_hello` listada con su esquema.
+**Qué hace esto:**
+- `POST http://localhost:8000/mcp`: Llamada al endpoint MCP
+- `"method": "tools/list"`: Solicita lista de herramientas disponibles
+- `"id": 1`: Identificador de la solicitud JSON-RPC
 
-### 4.4 Llamar la Herramienta Directamente
+**✅ Validar:**
+
+Deberías ver un JSON que incluye la herramienta `say_hello` con su esquema completo, incluyendo:
+- Nombre: `"say_hello"`
+- Descripción
+- Parámetros de entrada (`name`, `emoji`)
+
+Si ves el JSON con la herramienta listada, ¡el protocolo MCP funciona! ✅
+
+### 4.2 Llamar la Herramienta MCP
+
+**Prerequisitos:**
+- ✅ Sección 4.1 completada (sabes que `say_hello` existe)
+
+Ahora vamos a **ejecutar** la herramienta `say_hello`:
 
 ```bash
 curl -X POST http://localhost:8000/mcp \
@@ -1463,6 +1556,13 @@ curl -X POST http://localhost:8000/mcp \
   }'
 ```
 
+**Qué hace esto:**
+- `"method": "tools/call"`: Ejecuta una herramienta
+- `"name": "say_hello"`: Nombre de la herramienta a ejecutar
+- `"arguments"`: Parámetros de entrada (name: "Claude", emoji: true)
+
+**✅ Validar:**
+
 Deberías ver:
 
 ```json
@@ -1480,10 +1580,16 @@ Deberías ver:
 }
 ```
 
-### 4.5 Probar Diferentes Parámetros
+Si ves `"¡Hola Claude! 👋"` en el resultado, ¡tu herramienta MCP funciona! ✅
+
+### 4.3 Probar Diferentes Parámetros
+
+**Prerequisitos:**
+- ✅ Sección 4.2 completada (herramienta funciona con emoji)
+
+Ahora probemos **sin emoji** para verificar que el parámetro `emoji` funciona:
 
 ```bash
-# Sin emoji
 curl -X POST http://localhost:8000/mcp \
   -H "Content-Type: application/json" \
   -d '{
@@ -1500,7 +1606,15 @@ curl -X POST http://localhost:8000/mcp \
   }'
 ```
 
-Resultado: `¡Hola María!` (sin emoji)
+**Qué cambia:**
+- `"name": "María"`: Diferente nombre
+- `"emoji": false`: Sin emoji
+
+**✅ Validar:**
+
+Deberías ver en el resultado: `"¡Hola María!"` (sin el emoji 👋)
+
+Si el emoji no aparece, ¡los parámetros funcionan correctamente! ✅
 
 🎓 **Aprendiste**:
 - Cómo probar tu servidor MCP localmente
