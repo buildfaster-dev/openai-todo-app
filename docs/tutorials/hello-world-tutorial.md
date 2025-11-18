@@ -1346,6 +1346,8 @@ Crea `src/helloworld_app/main.py` con los imports:
 """Aplicación principal que expone el servidor MCP."""
 
 from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Route
+from starlette.responses import JSONResponse
 from dotenv import load_dotenv
 
 # Importar nuestro servidor MCP
@@ -1357,6 +1359,7 @@ load_dotenv()
 
 **Qué hace esto:**
 - Importa `CORSMiddleware` de Starlette para permitir peticiones desde ChatGPT
+- Importa `Route` y `JSONResponse` de Starlette para crear endpoints
 - Importa `load_dotenv` para leer el archivo `.env`
 - Importa el servidor MCP que creamos en el paso anterior
 - Carga las variables de entorno (como `PUBLIC_URL`)
@@ -1371,6 +1374,8 @@ Agrega la obtención de la app del servidor MCP:
 """Aplicación principal que expone el servidor MCP."""
 
 from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Route
+from starlette.responses import JSONResponse
 from dotenv import load_dotenv
 
 # Importar nuestro servidor MCP
@@ -1398,6 +1403,8 @@ Agrega el middleware CORS para que ChatGPT pueda llamar tu servidor:
 """Aplicación principal que expone el servidor MCP."""
 
 from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Route
+from starlette.responses import JSONResponse
 from dotenv import load_dotenv
 
 # Importar nuestro servidor MCP
@@ -1427,14 +1434,16 @@ app.add_middleware(
 - `allow_headers=["*"]`: Permite todos los headers HTTP en las peticiones (Content-Type, Authorization, etc.)
 - **Importante**: Sin CORS, ChatGPT no podría comunicarse con tu servidor
 
-**Archivo `src/helloworld_app/main.py` Completo:**
+**Paso 4: Agregar Endpoint de Salud**
 
-Tu archivo final debe verse así:
+Agrega un endpoint simple en la raíz para verificar que el servidor está vivo:
 
 ```python
 """Aplicación principal que expone el servidor MCP."""
 
 from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Route
+from starlette.responses import JSONResponse
 from dotenv import load_dotenv
 
 # Importar nuestro servidor MCP
@@ -1443,9 +1452,71 @@ from .mcp_server import mcp
 # Cargar variables de entorno desde .env
 load_dotenv()
 
+# Endpoint de salud
+async def health_check(request):
+    """Endpoint raíz para verificar que el servidor está vivo."""
+    return JSONResponse({
+        "message": "Hola Mundo App está corriendo",
+        "mcp_endpoint": "/mcp",
+        "status": "ok"
+    })
+
+# Obtener la aplicación Starlette del servidor MCP
+app = mcp.streamable_http_app()
+
+# Agregar ruta de salud
+app.routes.append(Route("/", health_check))
+
+# CORS: Permite que ChatGPT hable con tu app
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En producción, especifica dominios
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+**Qué hace esto:**
+- Define una función `health_check` que retorna información del servidor
+- `JSONResponse`: Retorna un objeto JSON
+- `Route("/", health_check)`: Crea una ruta en `/` que llama a `health_check`
+- `app.routes.append()`: Agrega la ruta al servidor MCP
+- **Útil**: Puedes visitar `http://localhost:8000/` para verificar que funciona
+
+**Archivo `src/helloworld_app/main.py` Completo:**
+
+Tu archivo final debe verse así:
+
+```python
+"""Aplicación principal que expone el servidor MCP."""
+
+from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Route
+from starlette.responses import JSONResponse
+from dotenv import load_dotenv
+
+# Importar nuestro servidor MCP
+from .mcp_server import mcp
+
+# Cargar variables de entorno desde .env
+load_dotenv()
+
+# Endpoint de salud
+async def health_check(request):
+    """Endpoint raíz para verificar que el servidor está vivo."""
+    return JSONResponse({
+        "message": "Hola Mundo App está corriendo",
+        "mcp_endpoint": "/mcp",
+        "status": "ok"
+    })
+
 # Obtener la aplicación Starlette del servidor MCP
 # Ya incluye el endpoint /mcp configurado automáticamente
 app = mcp.streamable_http_app()
+
+# Agregar ruta de salud
+app.routes.append(Route("/", health_check))
 
 # CORS: Permite que ChatGPT hable con tu app
 app.add_middleware(
@@ -1461,6 +1532,8 @@ app.add_middleware(
 - Cómo obtener la aplicación ASGI del servidor MCP
 - Por qué usamos Starlette en lugar de FastAPI (el servidor MCP ya crea la aplicación)
 - Que `streamable_http_app()` configura automáticamente el endpoint `/mcp`
+- Cómo agregar rutas personalizadas al servidor MCP con `app.routes.append()`
+- Cómo crear un endpoint de salud para verificar el estado del servidor
 - Por qué necesitamos CORS para que ChatGPT se comunique con tu app
 - Cómo configurar CORS con todos los parámetros necesarios
 
