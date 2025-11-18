@@ -808,19 +808,19 @@ Ahora viene la magia. Vamos a construir `src/helloworld_app/mcp_server.py` paso 
 ```python
 """Servidor MCP simple - Solo dice Hola."""
 
-from mcp.server.fastmcp import FastMCP
+from mcp import FastMCP, types
 from pydantic import BaseModel, Field
 import os
 
-# 1. Crear el servidor MCP (stateless para poder probarlo con curl)
-mcp = FastMCP("Hola Mundo App", stateless_http=True)
+# 1. Crear el servidor MCP
+mcp = FastMCP("Hola Mundo App")
 ```
 
 **Qué hace esto:**
-- Importa `FastMCP` desde `mcp.server.fastmcp` para crear el servidor MCP
+- Importa `FastMCP` y `types` desde el paquete `mcp`
 - Importa `Pydantic` para validación de datos
+- Importa `os` para leer variables de entorno
 - Crea una instancia del servidor MCP con un nombre
-- `stateless_http=True`: Hace que el servidor no requiera sesiones persistentes (permite probar con curl)
 
 **Paso 2: Definir el Modelo de Entrada**
 
@@ -837,10 +837,10 @@ class SayHelloInput(BaseModel):
 - Usa Pydantic para validación automática
 - `Field()` proporciona descripciones para ChatGPT
 
-**Paso 3: Crear la Herramienta MCP**
+**Paso 3: Crear la Herramienta MCP Simple**
 
 ```python
-# 3. Crear una herramienta MCP
+# 3. Crear una herramienta MCP simple
 @mcp.tool()
 def say_hello(input: SayHelloInput) -> str:
     """Dice hola a alguien de manera amigable.
@@ -859,13 +859,40 @@ def say_hello(input: SayHelloInput) -> str:
 - ChatGPT puede llamar esta función cuando el usuario lo solicite
 - Retorna un string simple con el saludo
 
-**Paso 4: Crear el Widget HTML**
+**Paso 3b: Crear la Herramienta que Muestra el Widget**
 
 ```python
-# 4. Crear un widget HTML simple
-@mcp.resource("ui://widget/hello.html")
+# 3b. Crear una herramienta que muestra el widget interactivo
+@mcp.tool(
+    _meta={
+        "openai/outputTemplate": "ui://widget/hello.html",
+        "openai/toolInvocation/invoking": "Abriendo el widget de saludos...",
+        "openai/toolInvocation/invoked": "Widget de saludos abierto",
+        "openai/widgetAccessible": True,
+    }
+)
 def show_hello_widget() -> str:
-    """Widget visual que muestra la aplicación de saludos."""
+    """Muestra el widget interactivo de saludos.
+
+    Abre una interfaz visual donde puedes escribir nombres y generar saludos personalizados.
+    """
+    return "Widget de saludos cargado. Usa la interfaz para crear saludos personalizados."
+```
+
+**Qué hace esto:**
+- `@mcp.tool()` con `_meta`: Registra la herramienta con metadatos especiales para OpenAI
+- `"openai/outputTemplate"`: Le dice a ChatGPT qué widget HTML mostrar cuando se llama esta herramienta
+- `"openai/toolInvocation/invoking"` y `"openai/toolInvocation/invoked"`: Mensajes que ChatGPT muestra antes y después de llamar la herramienta
+- `"openai/widgetAccessible": True`: Indica que esta herramienta tiene un widget asociado
+- Cuando ChatGPT llama esta herramienta, automáticamente muestra el widget HTML interactivo
+
+**Paso 4: Definir el HTML del Widget como Recurso**
+
+```python
+# 4. Definir el HTML del widget como recurso
+@mcp.resource("ui://widget/hello.html")
+def get_hello_widget_html() -> str:
+    """HTML del widget visual que muestra la aplicación de saludos."""
 
     # Obtener la URL pública (para llamadas API)
     public_url = os.getenv("PUBLIC_URL", "http://localhost:8000")
@@ -1090,12 +1117,12 @@ def show_hello_widget() -> str:
 ```python
 """Servidor MCP simple - Solo dice Hola."""
 
-from mcp.server.fastmcp import FastMCP
+from mcp import FastMCP, types
 from pydantic import BaseModel, Field
 import os
 
-# 1. Crear el servidor MCP (stateless para poder probarlo con curl)
-mcp = FastMCP("Hola Mundo App", stateless_http=True)
+# 1. Crear el servidor MCP
+mcp = FastMCP("Hola Mundo App")
 
 # 2. Definir el modelo de entrada para la herramienta
 class SayHelloInput(BaseModel):
@@ -1103,7 +1130,7 @@ class SayHelloInput(BaseModel):
     name: str = Field(description="Nombre de la persona a saludar")
     emoji: bool = Field(default=True, description="¿Incluir emoji?")
 
-# 3. Crear una herramienta MCP
+# 3. Crear una herramienta MCP simple
 @mcp.tool()
 def say_hello(input: SayHelloInput) -> str:
     """Dice hola a alguien de manera amigable.
@@ -1116,10 +1143,26 @@ def say_hello(input: SayHelloInput) -> str:
 
     return greeting
 
-# 4. Crear un widget HTML simple
-@mcp.resource("ui://widget/hello.html")
+# 3b. Crear una herramienta que muestra el widget interactivo
+@mcp.tool(
+    _meta={
+        "openai/outputTemplate": "ui://widget/hello.html",
+        "openai/toolInvocation/invoking": "Abriendo el widget de saludos...",
+        "openai/toolInvocation/invoked": "Widget de saludos abierto",
+        "openai/widgetAccessible": True,
+    }
+)
 def show_hello_widget() -> str:
-    """Widget visual que muestra la aplicación de saludos."""
+    """Muestra el widget interactivo de saludos.
+
+    Abre una interfaz visual donde puedes escribir nombres y generar saludos personalizados.
+    """
+    return "Widget de saludos cargado. Usa la interfaz para crear saludos personalizados."
+
+# 4. Definir el HTML del widget como recurso
+@mcp.resource("ui://widget/hello.html")
+def get_hello_widget_html() -> str:
+    """HTML del widget visual que muestra la aplicación de saludos."""
 
     # Obtener la URL pública (para llamadas API)
     public_url = os.getenv("PUBLIC_URL", "http://localhost:8000")
@@ -1333,9 +1376,11 @@ def show_hello_widget() -> str:
 
 🎓 **Aprendiste**:
 - Cómo crear un servidor MCP con `FastMCP`
-- Cómo definir herramientas con `@mcp.tool()`
-- Cómo crear widgets con `@mcp.resource()`
-- Cómo usar `window.openai.callTool()` en JavaScript
+- Cómo definir herramientas simples con `@mcp.tool()`
+- Cómo crear herramientas con widgets usando metadatos de OpenAI (`_meta`)
+- Qué hace `"openai/outputTemplate"` y cómo vincula una herramienta con un widget
+- Cómo registrar recursos HTML con `@mcp.resource()`
+- Cómo usar `window.openai.callTool()` en JavaScript dentro de widgets
 
 ### 3.4 Crear la Aplicación Principal - Paso a Paso
 
@@ -1648,10 +1693,6 @@ En esta parte vamos a probar directamente el **protocolo MCP** usando JSON-RPC 2
 - ✅ Servidor corriendo en terminal 1 con `just dev`
 - ✅ Terminal 2 abierta para ejecutar curl
 
-**⚠️ Nota sobre stateless_http:**
-
-Nuestro servidor usa `stateless_http=True`, lo que significa que **no mantiene sesiones**. Esto hace que sea fácil probarlo con curl (cada request es independiente).
-
 **⚠️ Nota sobre Server-Sent Events (SSE):**
 
 El servidor MCP responde usando formato **Server-Sent Events (SSE)**, no JSON puro. La respuesta tiene este formato:
@@ -1808,7 +1849,6 @@ curl -X POST http://localhost:8000/mcp \
 - `"input"`: Objeto que contiene los parámetros (requerido porque la función espera `input: SayHelloInput`)
 - `"name": "María"`: Diferente nombre
 - `"emoji": false`: Sin emoji
-- Como el servidor es stateless, cada request es independiente
 - `2>/dev/null | grep '^data:' | sed 's/^data: //'`: Extrae el JSON del formato SSE
 
 **✅ Validar:**
@@ -1821,8 +1861,6 @@ Si el emoji no aparece, ¡los parámetros funcionan correctamente! ✅
 - Cómo probar tu servidor MCP localmente con curl
 - El formato de solicitudes JSON-RPC 2.0 (`method`, `params`, `id`)
 - Cómo llamar herramientas MCP directamente sin ChatGPT
-- La diferencia entre `stateless_http=True` (sin sesiones) y `stateless_http=False` (con sesiones)
-- Por qué usamos `stateless_http=True` para facilitar el testing con curl
 - **Que el servidor MCP responde en formato Server-Sent Events (SSE)**, no JSON puro
 - **Cómo extraer JSON de SSE** usando `grep '^data:' | sed 's/^data: //'`
 - Por qué necesitamos el header `Accept: application/json, text/event-stream`
@@ -1890,7 +1928,23 @@ curl -X POST https://abc123-45-67-89-10.ngrok-free.app/mcp \
 
 Deberías ver la lista de herramientas MCP (como `say_hello`). ✅
 
-### 5.4 Ir a OpenAI Platform
+### 5.4 Conectar desde ChatGPT
+
+Hay dos formas de conectar tu app a ChatGPT:
+
+**Opción A: Desde ChatGPT directamente (Recomendado)**
+
+1. Abre ChatGPT: https://chatgpt.com
+2. Escribe en el chat:
+   ```
+   Conecta con mi servidor MCP en: https://tu-url-ngrok.ngrok-free.app/mcp
+   ```
+   ⚠️ **Importante**: Reemplaza `tu-url-ngrok.ngrok-free.app` con tu URL real de ngrok, y **no olvides el `/mcp` al final**
+
+3. ChatGPT te pedirá confirmación. Acepta la conexión.
+4. ¡Listo! ChatGPT ahora puede usar tus herramientas.
+
+**Opción B: Desde OpenAI Platform**
 
 1. Visita: https://platform.openai.com/playground/apps
 2. Click en "Create App"
@@ -1898,12 +1952,12 @@ Deberías ver la lista de herramientas MCP (como `say_hello`). ✅
    - **Name**: Hola Mundo App
    - **Description**: Tutorial básico de MCP
    - **MCP Server URL**: `https://tu-url-ngrok.ngrok-free.app/mcp` (⚠️ no olvides el `/mcp`)
-
 4. Click en "Create"
+5. La app estará disponible en ChatGPT
 
 ### 5.5 Probar en ChatGPT
 
-Ahora en ChatGPT, puedes decir:
+Una vez conectado, en ChatGPT puedes decir:
 
 **Ejemplo 1: Llamar la herramienta**
 ```
@@ -2027,21 +2081,11 @@ Terminating session: None
 
 **¿Por qué aparece?**
 
-Esto ocurre porque nuestro servidor usa `stateless_http=True`:
-
-```python
-# En mcp_server.py
-mcp = FastMCP("Hola Mundo App", stateless_http=True)
-```
-
-**Qué significa `stateless_http=True`:**
-- **Sin sesiones persistentes**: Cada request es completamente independiente
-- **Perfecto para testing con curl**: No necesitas mantener una sesión abierta
-- **Después de cada request**: El servidor "termina" la sesión (que es `None` porque no existe)
+Esto es el comportamiento normal del servidor MCP. El mensaje "Terminating session: None" simplemente indica que el servidor ha completado el procesamiento de la solicitud.
 
 **Es normal y esperado** - ¡tu servidor está funcionando correctamente! 🎉
 
-Si quisieras sesiones persistentes (para apps más complejas), usarías `stateless_http=False`, pero entonces no podrías probar fácilmente con curl.
+Estos logs son informativos y puedes ignorarlos con seguridad. No afectan la funcionalidad de tu aplicación.
 
 ### Error: "jq: parse error: Invalid numeric literal"
 
