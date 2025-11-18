@@ -97,8 +97,10 @@ MCP usa JSON-RPC 2.0 para toda la comunicación. Aquí hay un ejemplo:
   "params": {
     "name": "say_hello",
     "arguments": {
-      "name": "María",
-      "emoji": true
+      "input": {
+        "name": "María",
+        "emoji": true
+      }
     }
   }
 }
@@ -1737,8 +1739,10 @@ curl -X POST http://localhost:8000/mcp \
     "params": {
       "name": "say_hello",
       "arguments": {
-        "name": "Claude",
-        "emoji": true
+        "input": {
+          "name": "Claude",
+          "emoji": true
+        }
       }
     },
     "id": 2
@@ -1748,7 +1752,7 @@ curl -X POST http://localhost:8000/mcp \
 **Qué hace esto:**
 - `"method": "tools/call"`: Ejecuta una herramienta
 - `"name": "say_hello"`: Nombre de la herramienta a ejecutar
-- `"arguments"`: Parámetros de entrada (name: "Claude", emoji: true)
+- `"arguments"`: Parámetros de entrada envueltos en el objeto `input` (porque la función espera un parámetro `input: SayHelloInput`)
 - `2>/dev/null | grep '^data:' | sed 's/^data: //'`: Extrae el JSON del formato SSE
 - `| jq`: Formatea el JSON para que sea legible
 
@@ -1790,8 +1794,10 @@ curl -X POST http://localhost:8000/mcp \
     "params": {
       "name": "say_hello",
       "arguments": {
-        "name": "María",
-        "emoji": false
+        "input": {
+          "name": "María",
+          "emoji": false
+        }
       }
     },
     "id": 3
@@ -1799,6 +1805,7 @@ curl -X POST http://localhost:8000/mcp \
 ```
 
 **Qué hace esto:**
+- `"input"`: Objeto que contiene los parámetros (requerido porque la función espera `input: SayHelloInput`)
 - `"name": "María"`: Diferente nombre
 - `"emoji": false`: Sin emoji
 - Como el servidor es stateless, cada request es independiente
