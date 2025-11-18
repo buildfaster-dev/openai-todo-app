@@ -6,6 +6,49 @@ Also includes REST API endpoints for interactive widget functionality.
 """
 
 import logging
+import sys
+import warnings
+
+# Configurar logging para reducir ruido en desarrollo ANTES de importar módulos MCP
+# Suprime los tracebacks de MCP cuando se rechazan requests inválidos (como GET desde navegador)
+logging.getLogger("mcp.server.streamable_http").setLevel(logging.CRITICAL)
+logging.getLogger("anyio").setLevel(logging.CRITICAL)
+
+# Suprimir warnings de anyio
+warnings.filterwarnings("ignore", module="anyio")
+
+# Redirigir stderr para filtrar tracebacks específicos de MCP
+class FilteredStderr:
+    """Wrapper para stderr que filtra tracebacks conocidos de MCP"""
+    def __init__(self, original_stderr):
+        self.original_stderr = original_stderr
+        self.buffer = []
+        self.suppressing = False
+
+    def write(self, text):
+        # Detectar inicio de traceback problemático
+        if "Error in message router" in text:
+            self.suppressing = True
+            return
+
+        # Detectar fin de traceback
+        if self.suppressing:
+            if "anyio.ClosedResourceError" in text:
+                # Fin del traceback, ignorar todo
+                self.suppressing = False
+                return
+            # Seguir suprimiendo
+            return
+
+        # Pasar todo lo demás al stderr original
+        self.original_stderr.write(text)
+
+    def flush(self):
+        self.original_stderr.flush()
+
+# Aplicar el filtro a stderr
+sys.stderr = FilteredStderr(sys.stderr)
+
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Route
 from starlette.responses import JSONResponse
@@ -13,11 +56,6 @@ from starlette.requests import Request
 from .mcp_server import mcp
 from .models import TodoCreate, TodoUpdate, TodoStatus
 from .storage import storage
-
-# Configurar logging para reducir ruido en desarrollo
-# Suprime los tracebacks de MCP cuando se rechazan requests inválidos (como GET desde navegador)
-logging.getLogger("mcp.server.streamable_http").setLevel(logging.ERROR)
-logging.getLogger("anyio").setLevel(logging.ERROR)
 
 # REST API endpoints for interactive UI
 async def get_todos(request: Request) -> JSONResponse:
