@@ -1634,7 +1634,7 @@ Si ves este JSON, ¡tu servidor está corriendo correctamente! ✅
 
 ---
 
-## Parte 4: Probando el Protocolo MCP
+## Parte 4: Probando Localmente
 
 **⚠️ Prerequisitos:**
 - ✅ Servidor corriendo con `just dev` (validado en sección 3.5)
@@ -2009,6 +2009,39 @@ Ahora que entiendes lo básico, puedes:
 ---
 
 ## 🐛 Troubleshooting
+
+### Logs: "Terminating session: None" - ¿Es un error?
+
+**No es un error.** Cuando ves estos logs en tu servidor:
+
+```
+INFO: 127.0.0.1:62050 - "POST /mcp HTTP/1.1" 200 OK
+Processing request of type ListToolsRequest
+Terminating session: None
+```
+
+**Significado:**
+- `200 OK`: La solicitud fue exitosa ✅
+- `Processing request of type ListToolsRequest`: El servidor procesó una solicitud de lista de herramientas
+- `Terminating session: None`: El servidor termina la "sesión" después de cada request
+
+**¿Por qué aparece?**
+
+Esto ocurre porque nuestro servidor usa `stateless_http=True`:
+
+```python
+# En mcp_server.py
+mcp = FastMCP("Hola Mundo App", stateless_http=True)
+```
+
+**Qué significa `stateless_http=True`:**
+- **Sin sesiones persistentes**: Cada request es completamente independiente
+- **Perfecto para testing con curl**: No necesitas mantener una sesión abierta
+- **Después de cada request**: El servidor "termina" la sesión (que es `None` porque no existe)
+
+**Es normal y esperado** - ¡tu servidor está funcionando correctamente! 🎉
+
+Si quisieras sesiones persistentes (para apps más complejas), usarías `stateless_http=False`, pero entonces no podrías probar fácilmente con curl.
 
 ### Error: "jq: parse error: Invalid numeric literal"
 
