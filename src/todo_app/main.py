@@ -5,6 +5,7 @@ The server exposes tools with UI widgets for ChatGPT integration.
 Also includes REST API endpoints for interactive widget functionality.
 """
 
+import logging
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Route
 from starlette.responses import JSONResponse
@@ -12,6 +13,11 @@ from starlette.requests import Request
 from .mcp_server import mcp
 from .models import TodoCreate, TodoUpdate, TodoStatus
 from .storage import storage
+
+# Configurar logging para reducir ruido en desarrollo
+# Suprime los tracebacks de MCP cuando se rechazan requests inválidos (como GET desde navegador)
+logging.getLogger("mcp.server.streamable_http").setLevel(logging.ERROR)
+logging.getLogger("anyio").setLevel(logging.ERROR)
 
 # REST API endpoints for interactive UI
 async def get_todos(request: Request) -> JSONResponse:
