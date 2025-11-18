@@ -1650,23 +1650,38 @@ En esta parte vamos a probar directamente el **protocolo MCP** usando JSON-RPC 2
 
 Nuestro servidor usa `stateless_http=True`, lo que significa que **no mantiene sesiones**. Esto hace que sea fácil probarlo con curl (cada request es independiente).
 
+**⚠️ Nota sobre Server-Sent Events (SSE):**
+
+El servidor MCP responde usando formato **Server-Sent Events (SSE)**, no JSON puro. La respuesta tiene este formato:
+```
+event: message
+data: {json aquí}
+```
+
+Por eso necesitamos extraer la línea `data:` antes de pasarla a `jq`.
+
 **Ejecutar la solicitud JSON-RPC:**
 
 ```bash
 curl -X POST http://localhost:8000/mcp \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{
     "jsonrpc": "2.0",
     "method": "tools/list",
     "id": 1
-  }' | jq
+  }' 2>/dev/null | grep '^data:' | sed 's/^data: //' | jq
 ```
 
 **Qué hace esto:**
 - `POST http://localhost:8000/mcp`: Llamada al endpoint MCP
 - `Content-Type: application/json`: Indica que enviamos JSON
+- `Accept: application/json, text/event-stream`: Requerido por el servidor MCP
 - `"method": "tools/list"`: Solicita lista de herramientas disponibles
 - `"id": 1`: Identificador de la solicitud JSON-RPC
+- `2>/dev/null`: Oculta el progreso de curl
+- `grep '^data:'`: Filtra solo las líneas que empiezan con `data:`
+- `sed 's/^data: //'`: Elimina el prefijo `data: ` dejando solo el JSON
 - `| jq`: Formatea el JSON para que sea legible
 
 **✅ Validar:**
@@ -1715,6 +1730,7 @@ Ahora vamos a **ejecutar** la herramienta `say_hello`:
 ```bash
 curl -X POST http://localhost:8000/mcp \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{
     "jsonrpc": "2.0",
     "method": "tools/call",
@@ -1726,13 +1742,14 @@ curl -X POST http://localhost:8000/mcp \
       }
     },
     "id": 2
-  }' | jq
+  }' 2>/dev/null | grep '^data:' | sed 's/^data: //' | jq
 ```
 
 **Qué hace esto:**
 - `"method": "tools/call"`: Ejecuta una herramienta
 - `"name": "say_hello"`: Nombre de la herramienta a ejecutar
 - `"arguments"`: Parámetros de entrada (name: "Claude", emoji: true)
+- `2>/dev/null | grep '^data:' | sed 's/^data: //'`: Extrae el JSON del formato SSE
 - `| jq`: Formatea el JSON para que sea legible
 
 **✅ Validar:**
@@ -1766,6 +1783,7 @@ Ahora probemos **sin emoji** para verificar que el parámetro `emoji` funciona:
 ```bash
 curl -X POST http://localhost:8000/mcp \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{
     "jsonrpc": "2.0",
     "method": "tools/call",
@@ -1777,13 +1795,14 @@ curl -X POST http://localhost:8000/mcp \
       }
     },
     "id": 3
-  }' | jq
+  }' 2>/dev/null | grep '^data:' | sed 's/^data: //' | jq
 ```
 
 **Qué hace esto:**
 - `"name": "María"`: Diferente nombre
 - `"emoji": false`: Sin emoji
 - Como el servidor es stateless, cada request es independiente
+- `2>/dev/null | grep '^data:' | sed 's/^data: //'`: Extrae el JSON del formato SSE
 
 **✅ Validar:**
 
@@ -1797,6 +1816,9 @@ Si el emoji no aparece, ¡los parámetros funcionan correctamente! ✅
 - Cómo llamar herramientas MCP directamente sin ChatGPT
 - La diferencia entre `stateless_http=True` (sin sesiones) y `stateless_http=False` (con sesiones)
 - Por qué usamos `stateless_http=True` para facilitar el testing con curl
+- **Que el servidor MCP responde en formato Server-Sent Events (SSE)**, no JSON puro
+- **Cómo extraer JSON de SSE** usando `grep '^data:' | sed 's/^data: //'`
+- Por qué necesitamos el header `Accept: application/json, text/event-stream`
 - Cómo usar `jq` para formatear respuestas JSON
 
 ---
@@ -1839,12 +1861,27 @@ PUBLIC_URL=https://abc123-45-67-89-10.ngrok-free.app
 
 ### 5.3 Verificar que ngrok Funciona
 
+Primero, verifica el endpoint de salud:
+
 ```bash
 # Usa tu URL de ngrok
 curl https://abc123-45-67-89-10.ngrok-free.app/
 ```
 
-Deberías ver el mismo mensaje de antes. ✅
+Deberías ver el mensaje JSON con `"status": "ok"`. ✅
+
+Luego, verifica que el endpoint MCP funciona a través de ngrok:
+
+```bash
+# Usa tu URL de ngrok
+curl -X POST https://abc123-45-67-89-10.ngrok-free.app/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}' \
+  2>/dev/null | grep '^data:' | sed 's/^data: //' | jq
+```
+
+Deberías ver la lista de herramientas MCP (como `say_hello`). ✅
 
 ### 5.4 Ir a OpenAI Platform
 
@@ -1965,6 +2002,54 @@ Ahora que entiendes lo básico, puedes:
 ---
 
 ## 🐛 Troubleshooting
+
+### Error: "jq: parse error: Invalid numeric literal"
+
+Este error ocurre cuando intentas usar `jq` directamente en la respuesta del servidor MCP sin extraer el JSON del formato SSE.
+
+**Problema:**
+```bash
+# ❌ NO funciona (falta extracción SSE)
+curl -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}' | jq
+```
+
+**Solución:**
+```bash
+# ✅ SÍ funciona (con extracción SSE)
+curl -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}' \
+  2>/dev/null | grep '^data:' | sed 's/^data: //' | jq
+```
+
+**Explicación:** El servidor MCP responde en formato SSE (`event: message\ndata: {json}`), no JSON puro. Necesitas extraer la línea `data:` antes de parsear con `jq`.
+
+### Error: "Not Acceptable: Client must accept both application/json and text/event-stream"
+
+Este error ocurre cuando no incluyes el header `Accept` correcto en tus solicitudes al endpoint MCP.
+
+**Problema:**
+```bash
+# ❌ NO funciona (falta header Accept)
+curl -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}'
+```
+
+**Solución:**
+```bash
+# ✅ SÍ funciona (con header Accept)
+curl -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}' \
+  2>/dev/null | grep '^data:' | sed 's/^data: //' | jq
+```
+
+**Explicación:** El servidor MCP requiere que el cliente indique que puede manejar tanto JSON como Server-Sent Events (SSE). Agrega el header `-H "Accept: application/json, text/event-stream"` a todas tus solicitudes MCP.
 
 ### Error: "Module not found"
 
