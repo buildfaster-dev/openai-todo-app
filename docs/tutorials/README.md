@@ -12,9 +12,9 @@ Esta carpeta contiene tutoriales paso a paso para aprender a construir aplicacio
 
 Este tutorial te enseña:
 - ✅ Qué es MCP y cómo funciona (conceptos básicos)
-- ✅ Crear tu primera herramienta MCP en 10 líneas de código
-- ✅ Crear un widget HTML interactivo
-- ✅ Entender el flujo: ChatGPT → MCP → UI
+- ✅ Crear tu primera herramienta MCP simple
+- ✅ Entender JSON-RPC 2.0 y el protocolo MCP
+- ✅ Configurar entorno con Nix
 - ✅ Conectar con ChatGPT en minutos
 - ✅ Probar con ngrok
 
@@ -24,7 +24,29 @@ Este tutorial te enseña:
 - Ver el flujo completo en 30 minutos
 - Desarrolladores que prefieren empezar con algo simple
 
-### 2. [Tutorial de ToDo App](./todo-app-tutorial.md) ⭐ App completa
+### 2. [Tutorial de Widgets Interactivos](./widgets-tutorial.md) 🎨 ¡NUEVO!
+
+**Nivel**: Intermedio
+**Tiempo**: 30-45 minutos
+**Tipo**: Continuación del Hola Mundo
+**Prerequisito**: Tutorial Hola Mundo completado
+
+Este tutorial te enseña:
+- ✅ Crear widgets HTML que ChatGPT puede mostrar
+- ✅ Usar `@mcp.resource()` para registrar recursos
+- ✅ Entender el MIME type `text/html+skybridge`
+- ✅ Usar la API `window.openai.callTool()` desde JavaScript
+- ✅ Evolución de widgets: estático → dinámico → interactivo
+- ✅ Diseñar interfaces atractivas con CSS
+- ✅ Manejar estado e historial en widgets
+
+**Ideal para**:
+- Completar tu conocimiento después del Hola Mundo
+- Aprender a crear interfaces visuales para ChatGPT
+- Entender el flujo bidireccional: Widget ↔ MCP
+- Desarrolladores que quieren crear UIs interactivas
+
+### 3. [Tutorial de ToDo App](./todo-app-tutorial.md) ⭐ App completa
 
 **Nivel**: Principiante a Intermedio
 **Tiempo**: 90-120 minutos
@@ -40,7 +62,7 @@ Este tutorial te enseña a:
 
 **Ideal para**: Aprender con una aplicación funcional que puedes explorar, modificar y extender.
 
-### 3. [Tutorial de Notes App](./notes-app-tutorial.md) 🆕 ¡MEJORADO!
+### 4. [Tutorial de Notes App](./notes-app-tutorial.md) 🆕 ¡MEJORADO!
 
 **Nivel**: Principiante
 **Tiempo**: 2-3 horas (dividido en 2 partes)
@@ -91,12 +113,19 @@ Este tutorial te enseña a:
 - Necesitas entender el flujo antes de profundizar
 - **Recomendado para todos los principiantes**
 
-### Continúa con ToDo App si...
-- Ya hiciste el Hola Mundo (o entiendes MCP básico)
+### Continúa con Widgets si...
+- Ya completaste el Hola Mundo 🎨
+- Quieres agregar interfaces visuales a tu app
+- Te interesa la interactividad con `window.openai`
+- Quieres aprender diseño de widgets paso a paso
+- **Progresión natural después del Hola Mundo**
+
+### Explora ToDo App si...
+- Ya hiciste Hola Mundo + Widgets (o entiendes MCP básico)
 - Quieres ver una app completa funcionando
 - Prefieres aprender explorando código existente
 - Te interesa ver patrones y mejores prácticas en acción
-- Quieres extender una base sólida
+- Quieres extender una base sólida con CRUD
 
 ### Profundiza con Notes App si...
 - Prefieres construir todo desde cero con explicaciones detalladas
@@ -106,30 +135,44 @@ Este tutorial te enseña a:
 
 ## Ruta de Aprendizaje Recomendada
 
-### Para Principiantes Absolutos
+### Para Principiantes Absolutos (Ruta Completa)
 
 ```
 1. Tutorial Hola Mundo (30 min) ← ¡EMPIEZA AQUÍ!
+   ↓ (aprende herramientas MCP básicas)
+2. Tutorial de Widgets (45 min) ← ¡NUEVO!
+   ↓ (agrega interfaces visuales)
+3. Tutorial de ToDo App (90 min)
+   ↓ (ve una app completa con CRUD)
+4. Documentación EXPLANATION.md
+   ↓ (conceptos profundos)
+5. Tutorial de Notes App (opcional, construcción desde cero)
    ↓
-2. Tutorial de ToDo App (90 min) - Ver app completa
+6. Documentación GUIDE.md (referencia)
    ↓
-3. Documentación EXPLANATION.md - Conceptos profundos
-   ↓
-4. Tutorial de Notes App (opcional, construcción desde cero)
-   ↓
-5. Documentación GUIDE.md (referencia)
-   ↓
-6. Tu propia aplicación 🚀
+7. Tu propia aplicación 🚀
 ```
 
 ### Para Desarrolladores con Experiencia en APIs
 
 ```
-1. Tutorial Hola Mundo (15 min) - Conceptos MCP
+1. Tutorial Hola Mundo (20 min) - Conceptos MCP
    ↓
-2. Tutorial de ToDo App (60 min) - Patrones y mejores prácticas
+2. Tutorial de Widgets (30 min) - Interfaces interactivas
    ↓
-3. Tu propia aplicación 🚀
+3. Tutorial de ToDo App (60 min) - Patrones completos
+   ↓
+4. Tu propia aplicación 🚀
+```
+
+### Ruta Express (Mínimo Viable)
+
+```
+1. Tutorial Hola Mundo (30 min)
+   ↓
+2. Tutorial de Widgets (30 min)
+   ↓
+3. ¡Listo para construir tu primera app! 🚀
 ```
 
 ## Estructura de los Tutoriales
@@ -219,4 +262,6 @@ Si encuentras problemas:
 
 **¡Feliz aprendizaje!** 🚀
 
-Comienza con [Tutorial Hola Mundo](./hello-world-tutorial.md) → (30 min, perfecto para empezar)
+**Comienza aquí**:
+1. [Tutorial Hola Mundo](./hello-world-tutorial.md) → (30 min, perfecto para empezar)
+2. [Tutorial de Widgets](./widgets-tutorial.md) → (45 min, agrega UIs interactivas)
