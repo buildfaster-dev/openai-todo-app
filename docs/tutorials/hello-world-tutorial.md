@@ -1650,6 +1650,7 @@ En esta parte vamos a probar directamente el **protocolo MCP** usando JSON-RPC 2
 ```bash
 curl -X POST http://localhost:8000/mcp \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{
     "jsonrpc": "2.0",
     "method": "tools/list",
@@ -1659,6 +1660,8 @@ curl -X POST http://localhost:8000/mcp \
 
 **Qué hace esto:**
 - `POST http://localhost:8000/mcp`: Llamada al endpoint MCP
+- `Content-Type: application/json`: Indica que enviamos JSON
+- `Accept: application/json, text/event-stream`: Requerido por MCP para aceptar respuestas JSON y eventos
 - `"method": "tools/list"`: Solicita lista de herramientas disponibles
 - `"id": 1`: Identificador de la solicitud JSON-RPC
 
@@ -1681,6 +1684,7 @@ Ahora vamos a **ejecutar** la herramienta `say_hello`:
 ```bash
 curl -X POST http://localhost:8000/mcp \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{
     "jsonrpc": "2.0",
     "method": "tools/call",
@@ -1731,6 +1735,7 @@ Ahora probemos **sin emoji** para verificar que el parámetro `emoji` funciona:
 ```bash
 curl -X POST http://localhost:8000/mcp \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{
     "jsonrpc": "2.0",
     "method": "tools/call",
