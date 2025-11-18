@@ -1,6 +1,6 @@
 """Servidor MCP simple - Solo dice Hola."""
 
-from mcp import FastMCP
+from mcp import FastMCP, types
 from pydantic import BaseModel, Field
 import os
 
@@ -13,7 +13,7 @@ class SayHelloInput(BaseModel):
     name: str = Field(description="Nombre de la persona a saludar")
     emoji: bool = Field(default=True, description="¿Incluir emoji?")
 
-# 3. Crear una herramienta MCP
+# 3. Crear una herramienta MCP simple
 @mcp.tool()
 def say_hello(input: SayHelloInput) -> str:
     """Dice hola a alguien de manera amigable.
@@ -26,10 +26,26 @@ def say_hello(input: SayHelloInput) -> str:
 
     return greeting
 
-# 4. Crear un widget HTML simple
-@mcp.resource("ui://widget/hello.html")
+# 3b. Crear una herramienta que muestra el widget interactivo
+@mcp.tool(
+    _meta={
+        "openai/outputTemplate": "ui://widget/hello.html",
+        "openai/toolInvocation/invoking": "Abriendo el widget de saludos...",
+        "openai/toolInvocation/invoked": "Widget de saludos abierto",
+        "openai/widgetAccessible": True,
+    }
+)
 def show_hello_widget() -> str:
-    """Widget visual que muestra la aplicación de saludos."""
+    """Muestra el widget interactivo de saludos.
+
+    Abre una interfaz visual donde puedes escribir nombres y generar saludos personalizados.
+    """
+    return "Widget de saludos cargado. Usa la interfaz para crear saludos personalizados."
+
+# 4. Definir el HTML del widget como recurso
+@mcp.resource("ui://widget/hello.html")
+def get_hello_widget_html() -> str:
+    """HTML del widget visual que muestra la aplicación de saludos."""
 
     # Obtener la URL pública (para llamadas API)
     public_url = os.getenv("PUBLIC_URL", "http://localhost:8000")
