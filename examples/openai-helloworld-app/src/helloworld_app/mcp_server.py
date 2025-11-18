@@ -14,21 +14,8 @@ class SayHelloInput(BaseModel):
     name: str = Field(description="Nombre de la persona a saludar")
     emoji: bool = Field(default=True, description="¿Incluir emoji?")
 
-# 3. Crear una herramienta MCP simple
-@mcp.tool()
-def say_hello(input: SayHelloInput) -> str:
-    """Dice hola a alguien de manera amigable.
-
-    Esta es la función que ChatGPT puede llamar.
-    """
-    greeting = f"¡Hola {input.name}!"
-    if input.emoji:
-        greeting += " 👋"
-
-    return greeting
-
-# 3b. Definir handlers de MCP de bajo nivel para la herramienta de widget
-# Esto nos permite usar metadatos de OpenAI que FastMCP no soporta directamente
+# 3. Definir handlers de MCP de bajo nivel para ambas herramientas
+# FastMCP no soporta _meta en @mcp.tool(), así que usamos handlers manuales
 
 @mcp._mcp_server.list_tools()
 async def handle_list_tools() -> list[types.Tool]:
