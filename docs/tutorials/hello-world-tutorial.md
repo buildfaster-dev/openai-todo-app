@@ -419,8 +419,8 @@ Agrega las dependencias principales que tu app necesita:
 
 ```toml
 dependencies = [
-    "fastapi>=0.115.0",           # Framework web para construir APIs
-    "uvicorn[standard]>=0.32.0",  # Servidor ASGI para ejecutar FastAPI
+    "fastapi>=0.115.0",           # Incluye Starlette (framework ASGI usado por MCP)
+    "uvicorn[standard]>=0.32.0",  # Servidor ASGI para ejecutar la aplicación
     "mcp[fastapi]>=0.1.0",        # Biblioteca Model Context Protocol
     "pydantic>=2.9.0",            # Validación de datos usando type hints
     "python-dotenv>=1.0.0",       # Cargar variables de entorno desde .env
@@ -428,10 +428,10 @@ dependencies = [
 ```
 
 **Qué hace cada dependencia:**
-- **fastapi**: Framework web moderno para construir APIs con documentación OpenAPI automática
-- **uvicorn**: Servidor ASGI ultra-rápido para ejecutar tu app FastAPI
-- **mcp[fastapi]**: Biblioteca oficial de MCP con integración FastAPI
-- **pydantic**: Validación de datos usando type hints de Python (requerido por FastAPI)
+- **fastapi**: Incluye Starlette, el framework ASGI que usaremos (MCP crea una aplicación Starlette)
+- **uvicorn**: Servidor ASGI ultra-rápido para ejecutar la aplicación
+- **mcp[fastapi]**: Biblioteca oficial de MCP con todas las dependencias necesarias
+- **pydantic**: Validación de datos usando type hints de Python
 - **python-dotenv**: Carga configuración desde archivos `.env`
 
 **Paso 3: Sistema de Construcción**
@@ -490,68 +490,105 @@ packages = ["src/helloworld_app"]
 - Qué dependencias necesitas para una app MCP básica
 - Cómo configurar el sistema de construcción
 
-### 2.8 Crear justfile - Paso a Paso
+### 2.8 Crear .env.example
 
-El `justfile` es como un Makefile pero más simple. Define comandos útiles para tu proyecto.
+Antes de crear el `justfile`, necesitamos crear el archivo `.env.example` que el justfile va a copiar.
 
-**Paso 1: Comando de Inicialización**
+**Crear `.env.example`:**
 
-Crea `justfile` con un comando para inicializar el proyecto:
+```bash
+# URL pública de tu aplicación
+# Durante desarrollo local:
+PUBLIC_URL=http://localhost:8000
 
-```makefile
-# Inicializar el proyecto (primera vez)
-init:
-    @echo "📦 Creando entorno virtual..."
-    uv venv
-    @echo "📥 Instalando dependencias..."
-    uv sync
-    @echo "📝 Configurando variables de entorno..."
-    cp .env.example .env
-    @echo "✅ Proyecto inicializado. Usa 'just dev' para empezar."
+# Cuando uses ngrok, cambiarás esto a:
+# PUBLIC_URL=https://tu-url-ngrok.ngrok.app
 ```
 
 **Qué hace esto:**
-- Crea un entorno virtual Python con `uv venv`
-- Instala las dependencias con `uv sync`
-- Copia el template de variables de entorno
-- El `@` hace que no se muestre el comando, solo el output
+- Define la URL pública de tu aplicación
+- Se usará para que los widgets sepan dónde llamar las APIs
+- Durante desarrollo local usa `localhost:8000`
+- Cuando uses ngrok, actualizarás esta URL en `.env` (no en `.env.example`)
 
-**Paso 2: Comando de Desarrollo**
+🎓 **Aprendiste**:
+- Para qué sirve el archivo `.env.example`
+- Qué variables de entorno necesita tu app
+- La diferencia entre `.env.example` (template) y `.env` (valores reales)
 
-Agrega comando para iniciar el servidor de desarrollo:
+### 2.9 Crear .gitignore
 
-```makefile
-# Iniciar servidor de desarrollo
-dev:
-    @echo "🚀 Iniciando servidor de desarrollo..."
-    uv run uvicorn src.helloworld_app.main:app --reload --host 0.0.0.0 --port 8000
+También necesitamos crear `.gitignore` para evitar commitear archivos sensibles o generados:
+
+**Crear `.gitignore`:**
+
+```
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables
+.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# uv
+uv.lock
+
+# Nix
+.direnv/
+result
 ```
 
 **Qué hace esto:**
-- Usa `uv run` para ejecutar uvicorn en el entorno virtual
-- `--reload`: Reinicia automáticamente cuando cambias código
-- `--host 0.0.0.0`: Permite conexiones desde cualquier interfaz
-- `--port 8000`: Escucha en el puerto 8000
+- Ignora archivos generados por Python (`__pycache__`, `*.pyc`)
+- Ignora el entorno virtual (`.venv/`)
+- **Importante**: Ignora `.env` (que contiene configuración local/sensible)
+- No ignora `.env.example` (que es el template que sí se commitea)
 
-**Paso 3: Comando de Túnel**
+### 2.10 Crear justfile - Paso a Paso
 
-Agrega comando para iniciar ngrok:
+El `justfile` es como un Makefile pero más simple. Define comandos útiles para tu proyecto. Vamos a crearlo **incrementalmente**, validando cada comando antes de agregar el siguiente.
 
-```makefile
-# Iniciar túnel ngrok
-tunnel:
-    @echo "🌍 Iniciando túnel ngrok..."
-    @echo "⚠️  Copia la URL HTTPS y actualiza PUBLIC_URL en .env"
-    ngrok http 8000
-```
+#### 2.10.1 Comando `info` - Primer Paso
 
-**Qué hace esto:**
-- Inicia ngrok para exponer tu servidor local
-- Muestra recordatorio para actualizar la variable de entorno
+**Prerequisitos:**
+- ✅ Ninguno (este comando solo imprime información)
 
-**Paso 4: Comando de Información**
-
-Agrega comando para mostrar información útil:
+**Crear `justfile`** con el primer comando:
 
 ```makefile
 # Mostrar información del proyecto
@@ -561,17 +598,47 @@ info:
     @echo "📍 Servidor: http://localhost:8000"
     @echo "📍 MCP Endpoint: http://localhost:8000/mcp"
     @echo "📍 Docs API: http://localhost:8000/docs"
-    @echo ""
-    @echo "Comandos disponibles:"
-    @echo "  just init    - Inicializar proyecto"
-    @echo "  just dev     - Servidor de desarrollo"
-    @echo "  just tunnel  - Iniciar ngrok"
-    @echo "  just info    - Mostrar esta información"
 ```
 
-**`justfile` Completo:**
+**Qué hace esto:**
+- El `@` oculta el comando y solo muestra el output
+- Imprime información útil sobre el proyecto
+
+**✅ Validar ahora:**
+
+```bash
+just info
+```
+
+**Salida esperada:**
+```
+👋 Hola Mundo App
+═══════════════════════════════════
+📍 Servidor: http://localhost:8000
+📍 MCP Endpoint: http://localhost:8000/mcp
+📍 Docs API: http://localhost:8000/docs
+```
+
+Si ves este output, ¡tu `justfile` funciona! ✅
+
+#### 2.10.2 Comando `init` - Inicializar Proyecto
+
+**Prerequisitos:**
+- ✅ `pyproject.toml` (creado en sección 2.7)
+- ✅ `.env.example` (creado en sección 2.8)
+- ✅ Entorno Nix activo (entrado con `nix develop` en sección 2.6)
+
+**Agregar** el comando `init` a tu `justfile`:
 
 ```makefile
+# Mostrar información del proyecto
+info:
+    @echo "👋 Hola Mundo App"
+    @echo "═══════════════════════════════════"
+    @echo "📍 Servidor: http://localhost:8000"
+    @echo "📍 MCP Endpoint: http://localhost:8000/mcp"
+    @echo "📍 Docs API: http://localhost:8000/docs"
+
 # Inicializar el proyecto (primera vez)
 init:
     @echo "📦 Creando entorno virtual..."
@@ -580,19 +647,44 @@ init:
     uv sync
     @echo "📝 Configurando variables de entorno..."
     cp .env.example .env
-    @echo "✅ Proyecto inicializado. Usa 'just dev' para empezar."
+    @echo "✅ Proyecto inicializado."
+```
 
-# Iniciar servidor de desarrollo
-dev:
-    @echo "🚀 Iniciando servidor de desarrollo..."
-    uv run uvicorn src.helloworld_app.main:app --reload --host 0.0.0.0 --port 8000
+**Qué hace esto:**
+- `uv venv`: Crea un entorno virtual Python en `.venv/`
+- `uv sync`: Instala dependencias desde `pyproject.toml`
+- `cp .env.example .env`: Copia template de variables de entorno
 
-# Iniciar túnel ngrok
-tunnel:
-    @echo "🌍 Iniciando túnel ngrok..."
-    @echo "⚠️  Copia la URL HTTPS y actualiza PUBLIC_URL en .env"
-    ngrok http 8000
+**✅ Validar ahora:**
 
+```bash
+just init
+```
+
+**Salida esperada:**
+```
+📦 Creando entorno virtual...
+📥 Instalando dependencias...
+📝 Configurando variables de entorno...
+✅ Proyecto inicializado.
+```
+
+**Verificar que se crearon los archivos:**
+```bash
+ls -la .venv/    # Debe existir el entorno virtual
+ls -la .env      # Debe existir el archivo .env
+```
+
+Si ves estos archivos, ¡tu proyecto está inicializado! ✅
+
+#### 2.10.3 Comando `tunnel` - Para Más Adelante
+
+**Prerequisitos:**
+- ✅ ngrok instalado (ya está en tu entorno Nix)
+
+**Agregar** el comando `tunnel` a tu `justfile`:
+
+```makefile
 # Mostrar información del proyecto
 info:
     @echo "👋 Hola Mundo App"
@@ -600,18 +692,66 @@ info:
     @echo "📍 Servidor: http://localhost:8000"
     @echo "📍 MCP Endpoint: http://localhost:8000/mcp"
     @echo "📍 Docs API: http://localhost:8000/docs"
-    @echo ""
-    @echo "Comandos disponibles:"
-    @echo "  just init    - Inicializar proyecto"
-    @echo "  just dev     - Servidor de desarrollo"
-    @echo "  just tunnel  - Iniciar ngrok"
-    @echo "  just info    - Mostrar esta información"
+
+# Inicializar el proyecto (primera vez)
+init:
+    @echo "📦 Creando entorno virtual..."
+    uv venv
+    @echo "📥 Instalando dependencias..."
+    uv sync
+    @echo "📝 Configurando variables de entorno..."
+    cp .env.example .env
+    @echo "✅ Proyecto inicializado."
+
+# Iniciar túnel ngrok
+tunnel:
+    @echo "🌍 Iniciando túnel ngrok..."
+    @echo "⚠️  Copia la URL HTTPS y actualiza PUBLIC_URL en .env"
+    ngrok http 8000
+```
+
+**Qué hace esto:**
+- Inicia ngrok para exponer tu servidor local a Internet
+- Necesario para que ChatGPT acceda a tu app en desarrollo
+
+**⏭️ NO validar ahora** (lo haremos en la Parte 5 cuando tengamos el servidor corriendo)
+
+**Tu `justfile` actual debe verse así:**
+
+```makefile
+# Mostrar información del proyecto
+info:
+    @echo "👋 Hola Mundo App"
+    @echo "═══════════════════════════════════"
+    @echo "📍 Servidor: http://localhost:8000"
+    @echo "📍 MCP Endpoint: http://localhost:8000/mcp"
+    @echo "📍 Docs API: http://localhost:8000/docs"
+
+# Inicializar el proyecto (primera vez)
+init:
+    @echo "📦 Creando entorno virtual..."
+    uv venv
+    @echo "📥 Instalando dependencias..."
+    uv sync
+    @echo "📝 Configurando variables de entorno..."
+    cp .env.example .env
+    @echo "✅ Proyecto inicializado."
+
+# Iniciar túnel ngrok
+tunnel:
+    @echo "🌍 Iniciando túnel ngrok..."
+    @echo "⚠️  Copia la URL HTTPS y actualiza PUBLIC_URL en .env"
+    ngrok http 8000
 ```
 
 🎓 **Aprendiste**:
-- Cómo crear un `justfile` para automatizar tareas
-- Comandos útiles para desarrollo
-- Cómo usar `uv` para gestionar dependencias
+- Cómo crear un `justfile` incrementalmente
+- Validar cada comando antes de continuar
+- El comando `info` imprime información útil
+- El comando `init` configura tu proyecto
+- El comando `tunnel` se usará más adelante
+
+**Nota importante:** El comando `dev` lo agregaremos **después** de crear los archivos Python en la Parte 3, porque requiere que exista `src/helloworld_app/main.py`.
 
 ---
 
@@ -666,18 +806,19 @@ Ahora viene la magia. Vamos a construir `src/helloworld_app/mcp_server.py` paso 
 ```python
 """Servidor MCP simple - Solo dice Hola."""
 
-from mcp import FastMCP
+from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
 import os
 
-# 1. Crear el servidor MCP
-mcp = FastMCP("Hola Mundo App")
+# 1. Crear el servidor MCP (stateless para poder probarlo con curl)
+mcp = FastMCP("Hola Mundo App", stateless_http=True)
 ```
 
 **Qué hace esto:**
-- Importa `FastMCP` para crear el servidor MCP
+- Importa `FastMCP` desde `mcp.server.fastmcp` para crear el servidor MCP
 - Importa `Pydantic` para validación de datos
 - Crea una instancia del servidor MCP con un nombre
+- `stateless_http=True`: Hace que el servidor no requiera sesiones persistentes (permite probar con curl)
 
 **Paso 2: Definir el Modelo de Entrada**
 
@@ -947,12 +1088,12 @@ def show_hello_widget() -> str:
 ```python
 """Servidor MCP simple - Solo dice Hola."""
 
-from mcp import FastMCP
+from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
 import os
 
-# 1. Crear el servidor MCP
-mcp = FastMCP("Hola Mundo App")
+# 1. Crear el servidor MCP (stateless para poder probarlo con curl)
+mcp = FastMCP("Hola Mundo App", stateless_http=True)
 
 # 2. Definir el modelo de entrada para la herramienta
 class SayHelloInput(BaseModel):
@@ -1194,30 +1335,87 @@ def show_hello_widget() -> str:
 - Cómo crear widgets con `@mcp.resource()`
 - Cómo usar `window.openai.callTool()` en JavaScript
 
-### 3.4 Crear la Aplicación FastAPI
+### 3.4 Crear la Aplicación Principal - Paso a Paso
 
-Ahora creamos `src/helloworld_app/main.py`:
+Ahora viene la integración. Vamos a construir `src/helloworld_app/main.py` paso a paso:
+
+**Paso 1: Imports y Configuración Inicial**
+
+Crea `src/helloworld_app/main.py` con los imports:
 
 ```python
-"""Aplicación FastAPI que expone el servidor MCP."""
+"""Aplicación principal que expone el servidor MCP."""
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Route
+from starlette.responses import JSONResponse
 from dotenv import load_dotenv
 
 # Importar nuestro servidor MCP
 from .mcp_server import mcp
 
-# Cargar variables de entorno
+# Cargar variables de entorno desde .env
+load_dotenv()
+```
+
+**Qué hace esto:**
+- Importa `CORSMiddleware` de Starlette para permitir peticiones desde ChatGPT
+- Importa `Route` y `JSONResponse` de Starlette para crear endpoints
+- Importa `load_dotenv` para leer el archivo `.env`
+- Importa el servidor MCP que creamos en el paso anterior
+- Carga las variables de entorno (como `PUBLIC_URL`)
+
+**Nota**: Usamos Starlette (no FastAPI) porque el servidor MCP ya crea su propia aplicación ASGI.
+
+**Paso 2: Obtener la Aplicación del Servidor MCP**
+
+Agrega la obtención de la app del servidor MCP:
+
+```python
+"""Aplicación principal que expone el servidor MCP."""
+
+from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Route
+from starlette.responses import JSONResponse
+from dotenv import load_dotenv
+
+# Importar nuestro servidor MCP
+from .mcp_server import mcp
+
+# Cargar variables de entorno desde .env
 load_dotenv()
 
-# Crear la aplicación FastAPI
-app = FastAPI(
-    title="Hola Mundo App",
-    description="Tutorial básico de OpenAI Apps SDK",
-    version="0.1.0"
-)
+# Obtener la aplicación Starlette del servidor MCP
+# Ya incluye el endpoint /mcp configurado automáticamente
+app = mcp.streamable_http_app()
+```
+
+**Qué hace esto:**
+- `mcp.streamable_http_app()`: Obtiene la aplicación ASGI/Starlette del servidor MCP
+- El endpoint `/mcp` ya está configurado automáticamente
+- No necesitas crear una aplicación FastAPI separada ni montar nada
+- **Importante**: El servidor MCP maneja todo el protocolo JSON-RPC 2.0 automáticamente
+
+**Paso 3: Configurar CORS**
+
+Agrega el middleware CORS para que ChatGPT pueda llamar tu servidor:
+
+```python
+"""Aplicación principal que expone el servidor MCP."""
+
+from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Route
+from starlette.responses import JSONResponse
+from dotenv import load_dotenv
+
+# Importar nuestro servidor MCP
+from .mcp_server import mcp
+
+# Cargar variables de entorno desde .env
+load_dotenv()
+
+# Obtener la aplicación Starlette del servidor MCP
+app = mcp.streamable_http_app()
 
 # CORS: Permite que ChatGPT hable con tu app
 app.add_middleware(
@@ -1227,151 +1425,193 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Montar el servidor MCP en /mcp
-# Este es el endpoint que ChatGPT usará
-app.mount("/mcp", mcp.get_asgi_app())
-
-# Endpoint de salud (opcional, pero útil)
-@app.get("/")
-async def root():
-    return {
-        "message": "Hola Mundo App está corriendo",
-        "mcp_endpoint": "/mcp",
-        "status": "ok"
-    }
-
-# Para ejecutar directamente con Python
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
 
 **Qué hace esto:**
-- Crea una aplicación FastAPI
-- Configura CORS para permitir solicitudes desde ChatGPT
-- Monta el servidor MCP en el endpoint `/mcp`
-- Proporciona un endpoint de salud en `/`
+- CORS (Cross-Origin Resource Sharing): Permite solicitudes desde otros dominios
+- `allow_origins=["*"]`: Permite peticiones desde cualquier origen (⚠️ para desarrollo, en producción especifica dominios)
+- `allow_credentials=True`: Permite que las peticiones incluyan cookies y credenciales de autenticación
+- `allow_methods=["*"]`: Permite todos los métodos HTTP (GET, POST, PUT, DELETE, etc.)
+- `allow_headers=["*"]`: Permite todos los headers HTTP en las peticiones (Content-Type, Authorization, etc.)
+- **Importante**: Sin CORS, ChatGPT no podría comunicarse con tu servidor
+
+**Paso 4: Agregar Endpoint de Salud**
+
+Agrega un endpoint simple en la raíz para verificar que el servidor está vivo:
+
+```python
+"""Aplicación principal que expone el servidor MCP."""
+
+from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Route
+from starlette.responses import JSONResponse
+from dotenv import load_dotenv
+
+# Importar nuestro servidor MCP
+from .mcp_server import mcp
+
+# Cargar variables de entorno desde .env
+load_dotenv()
+
+# Endpoint de salud
+async def health_check(request):
+    """Endpoint raíz para verificar que el servidor está vivo."""
+    return JSONResponse({
+        "message": "Hola Mundo App está corriendo",
+        "mcp_endpoint": "/mcp",
+        "status": "ok"
+    })
+
+# Obtener la aplicación Starlette del servidor MCP
+app = mcp.streamable_http_app()
+
+# Agregar ruta de salud
+app.routes.append(Route("/", health_check))
+
+# CORS: Permite que ChatGPT hable con tu app
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En producción, especifica dominios
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+**Qué hace esto:**
+- Define una función `health_check` que retorna información del servidor
+- `JSONResponse`: Retorna un objeto JSON
+- `Route("/", health_check)`: Crea una ruta en `/` que llama a `health_check`
+- `app.routes.append()`: Agrega la ruta al servidor MCP
+- **Útil**: Puedes visitar `http://localhost:8000/` para verificar que funciona
+
+**Archivo `src/helloworld_app/main.py` Completo:**
+
+Tu archivo final debe verse así:
+
+```python
+"""Aplicación principal que expone el servidor MCP."""
+
+from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Route
+from starlette.responses import JSONResponse
+from dotenv import load_dotenv
+
+# Importar nuestro servidor MCP
+from .mcp_server import mcp
+
+# Cargar variables de entorno desde .env
+load_dotenv()
+
+# Endpoint de salud
+async def health_check(request):
+    """Endpoint raíz para verificar que el servidor está vivo."""
+    return JSONResponse({
+        "message": "Hola Mundo App está corriendo",
+        "mcp_endpoint": "/mcp",
+        "status": "ok"
+    })
+
+# Obtener la aplicación Starlette del servidor MCP
+# Ya incluye el endpoint /mcp configurado automáticamente
+app = mcp.streamable_http_app()
+
+# Agregar ruta de salud
+app.routes.append(Route("/", health_check))
+
+# CORS: Permite que ChatGPT hable con tu app
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En producción, especifica dominios
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
 
 🎓 **Aprendiste**:
-- Cómo integrar un servidor MCP con FastAPI
-- Por qué necesitamos CORS
-- Cómo montar el servidor MCP en un endpoint
+- Cómo obtener la aplicación ASGI del servidor MCP
+- Por qué usamos Starlette en lugar de FastAPI (el servidor MCP ya crea la aplicación)
+- Que `streamable_http_app()` configura automáticamente el endpoint `/mcp`
+- Cómo agregar rutas personalizadas al servidor MCP con `app.routes.append()`
+- Cómo crear un endpoint de salud para verificar el estado del servidor
+- Por qué necesitamos CORS para que ChatGPT se comunique con tu app
+- Cómo configurar CORS con todos los parámetros necesarios
 
-### 3.5 Crear Archivos de Configuración
+### 3.5 Agregar Comando `dev` al justfile
 
-**Crear `.env.example`:**
+Ahora que tenemos todos los archivos Python creados, podemos agregar el comando `dev` al justfile.
 
-```bash
-# URL pública de tu aplicación
-# Durante desarrollo local:
-PUBLIC_URL=http://localhost:8000
+**Prerequisitos:**
+- ✅ `src/helloworld_app/__init__.py` (creado en sección 3.2)
+- ✅ `src/helloworld_app/mcp_server.py` (creado en sección 3.3)
+- ✅ `src/helloworld_app/main.py` (creado en sección 3.4)
 
-# Cuando uses ngrok, cambiarás esto a:
-# PUBLIC_URL=https://tu-url-ngrok.ngrok.app
+**Agregar** el comando `dev` a tu `justfile` existente. Tu `justfile` completo debe verse así:
+
+```makefile
+# Mostrar información del proyecto
+info:
+    @echo "👋 Hola Mundo App"
+    @echo "═══════════════════════════════════"
+    @echo "📍 Servidor: http://localhost:8000"
+    @echo "📍 MCP Endpoint: http://localhost:8000/mcp"
+    @echo "📍 Docs API: http://localhost:8000/docs"
+
+# Inicializar el proyecto (primera vez)
+init:
+    @echo "📦 Creando entorno virtual..."
+    uv venv
+    @echo "📥 Instalando dependencias..."
+    uv sync
+    @echo "📝 Configurando variables de entorno..."
+    cp .env.example .env
+    @echo "✅ Proyecto inicializado."
+
+# Iniciar servidor de desarrollo
+dev:
+    @echo "🚀 Iniciando servidor de desarrollo..."
+    uv run uvicorn src.helloworld_app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Iniciar túnel ngrok
+tunnel:
+    @echo "🌍 Iniciando túnel ngrok..."
+    @echo "⚠️  Copia la URL HTTPS y actualiza PUBLIC_URL en .env"
+    ngrok http 8000
 ```
 
-**Crear `.gitignore`:**
+**Qué hace el comando `dev`:**
+- `uv run`: Ejecuta el comando en el entorno virtual
+- `uvicorn`: Servidor ASGI para ejecutar FastAPI
+- `src.helloworld_app.main:app`: Ruta al objeto FastAPI (app en main.py)
+- `--reload`: Reinicia automáticamente cuando cambias código
+- `--host 0.0.0.0`: Permite conexiones desde cualquier interfaz de red
+- `--port 8000`: Escucha en el puerto 8000
 
-```
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
-.venv/
-venv/
-ENV/
-env/
-
-# Environment variables
-.env
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# uv
-uv.lock
-
-# Nix
-.direnv/
-result
-```
-
-### 3.6 Inicializar el Proyecto
-
-```bash
-# Inicializar el proyecto (crea .env, instala dependencias)
-just init
-```
-
-Esto:
-1. Crea el entorno virtual
-2. Instala las dependencias
-3. Copia `.env.example` a `.env`
-
-🎓 **Aprendiste**:
-- Estructura completa de un proyecto MCP
-- Cómo organizar archivos de configuración
-- Cómo inicializar el proyecto
-
----
-
-## Parte 4: Probando Localmente
-
-### 4.1 Iniciar el Servidor
+**✅ Validar ahora:**
 
 ```bash
 just dev
 ```
 
-Deberías ver:
-
+**Salida esperada:**
 ```
 🚀 Iniciando servidor de desarrollo...
+INFO:     Will watch for changes in these directories: ['/ruta/a/tu/proyecto']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process
 INFO:     Started server process
 INFO:     Application startup complete.
 ```
 
-**¡Felicidades! Tu servidor MCP está corriendo.** 🎉
+**Verificar que el servidor funciona:**
 
-### 4.2 Verificar que el Servidor Está Vivo
-
-Abre otra terminal y ejecuta:
-
+En otra terminal, ejecuta:
 ```bash
-curl http://localhost:8000/
+curl http://localhost:8000/ | jq
 ```
 
 Deberías ver:
-
 ```json
 {
   "message": "Hola Mundo App está corriendo",
@@ -1380,7 +1620,37 @@ Deberías ver:
 }
 ```
 
-### 4.3 Listar Herramientas MCP Disponibles
+Si ves este JSON, ¡tu servidor está corriendo correctamente! ✅
+
+**Detener el servidor:** Presiona `Ctrl+C` en la terminal donde corre `just dev`.
+
+🎓 **Aprendiste**:
+- Cuándo agregar el comando `dev` (después de crear los archivos Python)
+- Cómo uvicorn ejecuta aplicaciones FastAPI
+- Cómo validar que el servidor está corriendo
+- Cómo detener el servidor de desarrollo
+
+---
+
+## Parte 4: Probando el Protocolo MCP
+
+**⚠️ Prerequisitos:**
+- ✅ Servidor corriendo con `just dev` (validado en sección 3.5)
+- ✅ Terminal adicional abierta para ejecutar comandos `curl`
+
+En esta parte vamos a probar directamente el **protocolo MCP** usando JSON-RPC 2.0.
+
+### 4.1 Listar Herramientas MCP Disponibles
+
+**Prerequisitos:**
+- ✅ Servidor corriendo en terminal 1 con `just dev`
+- ✅ Terminal 2 abierta para ejecutar curl
+
+**⚠️ Nota sobre stateless_http:**
+
+Nuestro servidor usa `stateless_http=True`, lo que significa que **no mantiene sesiones**. Esto hace que sea fácil probarlo con curl (cada request es independiente).
+
+**Ejecutar la solicitud JSON-RPC:**
 
 ```bash
 curl -X POST http://localhost:8000/mcp \
@@ -1389,12 +1659,58 @@ curl -X POST http://localhost:8000/mcp \
     "jsonrpc": "2.0",
     "method": "tools/list",
     "id": 1
-  }'
+  }' | jq
 ```
 
-Deberías ver la herramienta `say_hello` listada con su esquema.
+**Qué hace esto:**
+- `POST http://localhost:8000/mcp`: Llamada al endpoint MCP
+- `Content-Type: application/json`: Indica que enviamos JSON
+- `"method": "tools/list"`: Solicita lista de herramientas disponibles
+- `"id": 1`: Identificador de la solicitud JSON-RPC
+- `| jq`: Formatea el JSON para que sea legible
 
-### 4.4 Llamar la Herramienta Directamente
+**✅ Validar:**
+
+Deberías ver un JSON que incluye la herramienta `say_hello` con su esquema completo:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "tools": [
+      {
+        "name": "say_hello",
+        "description": "Dice hola a alguien de manera amigable.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "Nombre de la persona a saludar",
+              "type": "string"
+            },
+            "emoji": {
+              "default": true,
+              "description": "¿Incluir emoji?",
+              "type": "boolean"
+            }
+          },
+          "required": ["name"]
+        }
+      }
+    ]
+  }
+}
+```
+
+Si ves la herramienta `say_hello` listada, ¡el protocolo MCP funciona! ✅
+
+### 4.2 Llamar la Herramienta MCP
+
+**Prerequisitos:**
+- ✅ Sección 4.1 completada (sabes que `say_hello` existe)
+
+Ahora vamos a **ejecutar** la herramienta `say_hello`:
 
 ```bash
 curl -X POST http://localhost:8000/mcp \
@@ -1410,8 +1726,16 @@ curl -X POST http://localhost:8000/mcp \
       }
     },
     "id": 2
-  }'
+  }' | jq
 ```
+
+**Qué hace esto:**
+- `"method": "tools/call"`: Ejecuta una herramienta
+- `"name": "say_hello"`: Nombre de la herramienta a ejecutar
+- `"arguments"`: Parámetros de entrada (name: "Claude", emoji: true)
+- `| jq`: Formatea el JSON para que sea legible
+
+**✅ Validar:**
 
 Deberías ver:
 
@@ -1430,10 +1754,16 @@ Deberías ver:
 }
 ```
 
-### 4.5 Probar Diferentes Parámetros
+Si ves `"¡Hola Claude! 👋"` en el resultado, ¡tu herramienta MCP funciona! ✅
+
+### 4.3 Probar Diferentes Parámetros
+
+**Prerequisitos:**
+- ✅ Sección 4.2 completada (herramienta funciona con emoji)
+
+Ahora probemos **sin emoji** para verificar que el parámetro `emoji` funciona:
 
 ```bash
-# Sin emoji
 curl -X POST http://localhost:8000/mcp \
   -H "Content-Type: application/json" \
   -d '{
@@ -1447,15 +1777,27 @@ curl -X POST http://localhost:8000/mcp \
       }
     },
     "id": 3
-  }'
+  }' | jq
 ```
 
-Resultado: `¡Hola María!` (sin emoji)
+**Qué hace esto:**
+- `"name": "María"`: Diferente nombre
+- `"emoji": false`: Sin emoji
+- Como el servidor es stateless, cada request es independiente
+
+**✅ Validar:**
+
+Deberías ver en el resultado: `"¡Hola María!"` (sin el emoji 👋)
+
+Si el emoji no aparece, ¡los parámetros funcionan correctamente! ✅
 
 🎓 **Aprendiste**:
-- Cómo probar tu servidor MCP localmente
-- El formato de solicitudes JSON-RPC 2.0
-- Cómo llamar herramientas MCP directamente con curl
+- Cómo probar tu servidor MCP localmente con curl
+- El formato de solicitudes JSON-RPC 2.0 (`method`, `params`, `id`)
+- Cómo llamar herramientas MCP directamente sin ChatGPT
+- La diferencia entre `stateless_http=True` (sin sesiones) y `stateless_http=False` (con sesiones)
+- Por qué usamos `stateless_http=True` para facilitar el testing con curl
+- Cómo usar `jq` para formatear respuestas JSON
 
 ---
 
