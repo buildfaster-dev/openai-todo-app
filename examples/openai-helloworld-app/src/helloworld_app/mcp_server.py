@@ -1,6 +1,7 @@
 """Servidor MCP simple - Solo dice Hola."""
 
-from mcp import FastMCP, types
+import mcp.types as types
+from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
 import os
 
@@ -26,21 +27,86 @@ def say_hello(input: SayHelloInput) -> str:
 
     return greeting
 
-# 3b. Crear una herramienta que muestra el widget interactivo
-@mcp.tool(
-    _meta={
-        "openai/outputTemplate": "ui://widget/hello.html",
-        "openai/toolInvocation/invoking": "Abriendo el widget de saludos...",
-        "openai/toolInvocation/invoked": "Widget de saludos abierto",
-        "openai/widgetAccessible": True,
-    }
-)
-def show_hello_widget() -> str:
-    """Muestra el widget interactivo de saludos.
+# 3b. Definir handlers de MCP de bajo nivel para la herramienta de widget
+# Esto nos permite usar metadatos de OpenAI que FastMCP no soporta directamente
 
-    Abre una interfaz visual donde puedes escribir nombres y generar saludos personalizados.
-    """
-    return "Widget de saludos cargado. Usa la interfaz para crear saludos personalizados."
+@mcp._mcp_server.list_tools()
+async def handle_list_tools() -> list[types.Tool]:
+    """Lista todas las herramientas disponibles"""
+    return [
+        # Herramienta say_hello
+        types.Tool(
+            name="say_hello",
+            description="Dice hola a alguien de manera amigable",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Nombre de la persona a saludar"
+                    },
+                    "emoji": {
+                        "type": "boolean",
+                        "description": "¿Incluir emoji?",
+                        "default": True
+                    }
+                },
+                "required": ["name"],
+                "additionalProperties": False
+            }
+        ),
+        # Herramienta show_hello_widget con metadatos de OpenAI
+        types.Tool(
+            name="show_hello_widget",
+            description="Muestra el widget interactivo de saludos donde puedes escribir nombres y generar saludos personalizados",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "additionalProperties": False
+            },
+            _meta={
+                "openai/outputTemplate": "ui://widget/hello.html",
+                "openai/widgetAccessible": True,
+            }
+        )
+    ]
+
+@mcp._mcp_server.call_tool()
+async def handle_call_tool(name: str, arguments: dict) -> types.CallToolResult:
+    """Maneja llamadas a herramientas"""
+
+    if name == "say_hello":
+        # Validar entrada
+        input_data = SayHelloInput(**arguments)
+        # Generar saludo
+        greeting = f"¡Hola {input_data.name}!"
+        if input_data.emoji:
+            greeting += " 👋"
+
+        return types.CallToolResult(
+            content=[
+                types.TextContent(
+                    type="text",
+                    text=greeting
+                )
+            ]
+        )
+
+    elif name == "show_hello_widget":
+        return types.CallToolResult(
+            content=[
+                types.TextContent(
+                    type="text",
+                    text="Widget de saludos cargado. Usa la interfaz para crear saludos personalizados."
+                )
+            ],
+            _meta={
+                "openai/toolInvocation/invoking": "Abriendo el widget de saludos...",
+                "openai/toolInvocation/invoked": "Widget de saludos abierto",
+            }
+        )
+
+    raise ValueError(f"Herramienta desconocida: {name}")
 
 # 4. Definir el HTML del widget como recurso
 @mcp.resource("ui://widget/hello.html")
