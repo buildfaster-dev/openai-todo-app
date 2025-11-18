@@ -808,19 +808,19 @@ Ahora viene la magia. Vamos a construir `src/helloworld_app/mcp_server.py` paso 
 ```python
 """Servidor MCP simple - Solo dice Hola."""
 
-from mcp.server.fastmcp import FastMCP
+from mcp import FastMCP, types
 from pydantic import BaseModel, Field
 import os
 
-# 1. Crear el servidor MCP (stateless para poder probarlo con curl)
-mcp = FastMCP("Hola Mundo App", stateless_http=True)
+# 1. Crear el servidor MCP
+mcp = FastMCP("Hola Mundo App")
 ```
 
 **Qué hace esto:**
-- Importa `FastMCP` desde `mcp.server.fastmcp` para crear el servidor MCP
+- Importa `FastMCP` y `types` desde el paquete `mcp`
 - Importa `Pydantic` para validación de datos
+- Importa `os` para leer variables de entorno
 - Crea una instancia del servidor MCP con un nombre
-- `stateless_http=True`: Hace que el servidor no requiera sesiones persistentes (permite probar con curl)
 
 **Paso 2: Definir el Modelo de Entrada**
 
@@ -840,7 +840,7 @@ class SayHelloInput(BaseModel):
 **Paso 3: Crear la Herramienta MCP**
 
 ```python
-# 3. Crear una herramienta MCP
+# 3. Crear la herramienta MCP
 @mcp.tool()
 def say_hello(input: SayHelloInput) -> str:
     """Dice hola a alguien de manera amigable.
@@ -858,244 +858,20 @@ def say_hello(input: SayHelloInput) -> str:
 - El decorador `@mcp.tool()` registra la función como herramienta MCP
 - ChatGPT puede llamar esta función cuando el usuario lo solicite
 - Retorna un string simple con el saludo
+- FastMCP automáticamente genera el esquema JSON y la descripción de la herramienta
 
-**Paso 4: Crear el Widget HTML**
-
-```python
-# 4. Crear un widget HTML simple
-@mcp.resource("ui://widget/hello.html")
-def show_hello_widget() -> str:
-    """Widget visual que muestra la aplicación de saludos."""
-
-    # Obtener la URL pública (para llamadas API)
-    public_url = os.getenv("PUBLIC_URL", "http://localhost:8000")
-
-    # HTML auto-contenido con estilos y JavaScript
-    html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hola Mundo</title>
-    <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }}
-
-        .container {{
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }}
-
-        h1 {{
-            color: #667eea;
-            text-align: center;
-            margin-bottom: 10px;
-        }}
-
-        .subtitle {{
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }}
-
-        .input-group {{
-            margin-bottom: 20px;
-        }}
-
-        label {{
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-        }}
-
-        input[type="text"] {{
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            box-sizing: border-box;
-            transition: border-color 0.3s;
-        }}
-
-        input[type="text"]:focus {{
-            outline: none;
-            border-color: #667eea;
-        }}
-
-        .checkbox-group {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }}
-
-        input[type="checkbox"] {{
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-        }}
-
-        button {{
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }}
-
-        button:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }}
-
-        button:active {{
-            transform: translateY(0);
-        }}
-
-        .result {{
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: 500;
-            color: #333;
-            display: none;
-        }}
-
-        .result.show {{
-            display: block;
-            animation: fadeIn 0.5s;
-        }}
-
-        @keyframes fadeIn {{
-            from {{ opacity: 0; transform: translateY(10px); }}
-            to {{ opacity: 1; transform: translateY(0); }}
-        }}
-
-        .info-box {{
-            margin-top: 20px;
-            padding: 15px;
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            border-radius: 5px;
-            font-size: 13px;
-            color: #1976d2;
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>👋 Hola Mundo</h1>
-        <p class="subtitle">Tutorial de OpenAI Apps SDK</p>
-
-        <div class="input-group">
-            <label for="nameInput">¿A quién quieres saludar?</label>
-            <input
-                type="text"
-                id="nameInput"
-                placeholder="Ej: María, Juan, Claude..."
-                value="Mundo"
-            />
-        </div>
-
-        <div class="checkbox-group">
-            <input type="checkbox" id="emojiCheck" checked />
-            <label for="emojiCheck">Incluir emoji 👋</label>
-        </div>
-
-        <button onclick="sayHello()">¡Saludar!</button>
-
-        <div id="result" class="result"></div>
-
-        <div class="info-box">
-            <strong>💡 Cómo funciona:</strong><br>
-            Este widget llama a la herramienta MCP "say_hello" cuando haces clic en el botón.
-        </div>
-    </div>
-
-    <script>
-        // Esta función se ejecuta cuando haces clic en "¡Saludar!"
-        async function sayHello() {{
-            const name = document.getElementById('nameInput').value;
-            const emoji = document.getElementById('emojiCheck').checked;
-            const resultDiv = document.getElementById('result');
-
-            // Mostrar "Cargando..."
-            resultDiv.textContent = '⏳ Generando saludo...';
-            resultDiv.classList.add('show');
-
-            try {{
-                // IMPORTANTE: Usar window.openai para llamar herramientas MCP
-                // Esto es específico de OpenAI Apps SDK
-                const result = await window.openai.callTool({{
-                    name: 'say_hello',  // Nombre de la herramienta MCP
-                    parameters: {{
-                        name: name,
-                        emoji: emoji
-                    }}
-                }});
-
-                // Mostrar el resultado
-                resultDiv.textContent = result;
-
-            }} catch (error) {{
-                resultDiv.textContent = '❌ Error: ' + error.message;
-                console.error('Error:', error);
-            }}
-        }}
-
-        // Permitir presionar Enter en el input
-        document.getElementById('nameInput').addEventListener('keypress', function(e) {{
-            if (e.key === 'Enter') {{
-                sayHello();
-            }}
-        }});
-    </script>
-</body>
-</html>
-    """
-
-    return html
-```
-
-**Qué hace esto:**
-- El decorador `@mcp.resource()` registra el widget con un URI único
-- Genera HTML con CSS y JavaScript embebidos
-- Usa `window.openai.callTool()` para llamar la herramienta MCP desde JavaScript
-- El widget es completamente auto-contenido (no necesita archivos externos)
+¡Y eso es todo! Con solo 3 pasos tienes una herramienta MCP funcional. Veamos el código completo:
 
 **Archivo `src/helloworld_app/mcp_server.py` Completo:**
-
-<detalles>
-<summary>Ver código completo de mcp_server.py</summary>
 
 ```python
 """Servidor MCP simple - Solo dice Hola."""
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
-import os
 
-# 1. Crear el servidor MCP (stateless para poder probarlo con curl)
-mcp = FastMCP("Hola Mundo App", stateless_http=True)
+# 1. Crear el servidor MCP
+mcp = FastMCP("Hola Mundo App")
 
 # 2. Definir el modelo de entrada para la herramienta
 class SayHelloInput(BaseModel):
@@ -1103,7 +879,7 @@ class SayHelloInput(BaseModel):
     name: str = Field(description="Nombre de la persona a saludar")
     emoji: bool = Field(default=True, description="¿Incluir emoji?")
 
-# 3. Crear una herramienta MCP
+# 3. Crear la herramienta MCP
 @mcp.tool()
 def say_hello(input: SayHelloInput) -> str:
     """Dice hola a alguien de manera amigable.
@@ -1115,235 +891,32 @@ def say_hello(input: SayHelloInput) -> str:
         greeting += " 👋"
 
     return greeting
-
-# 4. Crear un widget HTML simple
-@mcp.resource("ui://widget/hello.html")
-def show_hello_widget() -> str:
-    """Widget visual que muestra la aplicación de saludos."""
-
-    # Obtener la URL pública (para llamadas API)
-    public_url = os.getenv("PUBLIC_URL", "http://localhost:8000")
-
-    # HTML auto-contenido con estilos y JavaScript
-    html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hola Mundo</title>
-    <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }}
-
-        .container {{
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }}
-
-        h1 {{
-            color: #667eea;
-            text-align: center;
-            margin-bottom: 10px;
-        }}
-
-        .subtitle {{
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }}
-
-        .input-group {{
-            margin-bottom: 20px;
-        }}
-
-        label {{
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-        }}
-
-        input[type="text"] {{
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            box-sizing: border-box;
-            transition: border-color 0.3s;
-        }}
-
-        input[type="text"]:focus {{
-            outline: none;
-            border-color: #667eea;
-        }}
-
-        .checkbox-group {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }}
-
-        input[type="checkbox"] {{
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-        }}
-
-        button {{
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }}
-
-        button:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }}
-
-        button:active {{
-            transform: translateY(0);
-        }}
-
-        .result {{
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: 500;
-            color: #333;
-            display: none;
-        }}
-
-        .result.show {{
-            display: block;
-            animation: fadeIn 0.5s;
-        }}
-
-        @keyframes fadeIn {{
-            from {{ opacity: 0; transform: translateY(10px); }}
-            to {{ opacity: 1; transform: translateY(0); }}
-        }}
-
-        .info-box {{
-            margin-top: 20px;
-            padding: 15px;
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            border-radius: 5px;
-            font-size: 13px;
-            color: #1976d2;
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>👋 Hola Mundo</h1>
-        <p class="subtitle">Tutorial de OpenAI Apps SDK</p>
-
-        <div class="input-group">
-            <label for="nameInput">¿A quién quieres saludar?</label>
-            <input
-                type="text"
-                id="nameInput"
-                placeholder="Ej: María, Juan, Claude..."
-                value="Mundo"
-            />
-        </div>
-
-        <div class="checkbox-group">
-            <input type="checkbox" id="emojiCheck" checked />
-            <label for="emojiCheck">Incluir emoji 👋</label>
-        </div>
-
-        <button onclick="sayHello()">¡Saludar!</button>
-
-        <div id="result" class="result"></div>
-
-        <div class="info-box">
-            <strong>💡 Cómo funciona:</strong><br>
-            Este widget llama a la herramienta MCP "say_hello" cuando haces clic en el botón.
-        </div>
-    </div>
-
-    <script>
-        // Esta función se ejecuta cuando haces clic en "¡Saludar!"
-        async function sayHello() {{
-            const name = document.getElementById('nameInput').value;
-            const emoji = document.getElementById('emojiCheck').checked;
-            const resultDiv = document.getElementById('result');
-
-            // Mostrar "Cargando..."
-            resultDiv.textContent = '⏳ Generando saludo...';
-            resultDiv.classList.add('show');
-
-            try {{
-                // IMPORTANTE: Usar window.openai para llamar herramientas MCP
-                // Esto es específico de OpenAI Apps SDK
-                const result = await window.openai.callTool({{
-                    name: 'say_hello',  // Nombre de la herramienta MCP
-                    parameters: {{
-                        name: name,
-                        emoji: emoji
-                    }}
-                }});
-
-                // Mostrar el resultado
-                resultDiv.textContent = result;
-
-            }} catch (error) {{
-                resultDiv.textContent = '❌ Error: ' + error.message;
-                console.error('Error:', error);
-            }}
-        }}
-
-        // Permitir presionar Enter en el input
-        document.getElementById('nameInput').addEventListener('keypress', function(e) {{
-            if (e.key === 'Enter') {{
-                sayHello();
-            }}
-        }});
-    </script>
-</body>
-</html>
-    """
-
-    return html
 ```
-</detalles>
 
-🎓 **Aprendiste**:
+**¡Solo 26 líneas de código!** Y ya tienes un servidor MCP completo que ChatGPT puede usar.
+
+🎓 **Aprendiste:**
 - Cómo crear un servidor MCP con `FastMCP`
-- Cómo definir herramientas con `@mcp.tool()`
-- Cómo crear widgets con `@mcp.resource()`
-- Cómo usar `window.openai.callTool()` en JavaScript
+- Cómo definir modelos de entrada con Pydantic
+- Cómo usar `@mcp.tool()` para registrar herramientas
+- El flujo básico: Usuario → ChatGPT → MCP → Python → Respuesta
+
+**Nota:** Si quieres agregar widgets HTML interactivos a tu app, consulta el tutorial avanzado "Agregando Widgets a tu App MCP" (próximamente).
+
+---
 
 ### 3.4 Crear la Aplicación Principal - Paso a Paso
 
-Ahora viene la integración. Vamos a construir `src/helloworld_app/main.py` paso a paso:
+Ahora vamos a crear `src/helloworld_app/main.py` para exponer nuestro servidor MCP via HTTP:
+
+**¿Por qué necesitamos este archivo?**
+- `mcp_server.py` define las herramientas
+- `main.py` crea la aplicación web que expone esas herramientas en `/mcp`
+- ChatGPT se conecta a esta aplicación para usar tus herramientas
 
 **Paso 1: Imports y Configuración Inicial**
 
-Crea `src/helloworld_app/main.py` con los imports:
+Crea `src/helloworld_app/main.py`:
 
 ```python
 """Aplicación principal que expone el servidor MCP."""
@@ -1361,100 +934,13 @@ load_dotenv()
 ```
 
 **Qué hace esto:**
-- Importa `CORSMiddleware` de Starlette para permitir peticiones desde ChatGPT
-- Importa `Route` y `JSONResponse` de Starlette para crear endpoints
-- Importa `load_dotenv` para leer el archivo `.env`
-- Importa el servidor MCP que creamos en el paso anterior
-- Carga las variables de entorno (como `PUBLIC_URL`)
+- Importa componentes de Starlette para crear la app web
+- Importa el servidor MCP que definimos
+- Carga variables de entorno (como `PUBLIC_URL`)
 
-**Nota**: Usamos Starlette (no FastAPI) porque el servidor MCP ya crea su propia aplicación ASGI.
-
-**Paso 2: Obtener la Aplicación del Servidor MCP**
-
-Agrega la obtención de la app del servidor MCP:
+**Paso 2: Crear Endpoint de Salud**
 
 ```python
-"""Aplicación principal que expone el servidor MCP."""
-
-from starlette.middleware.cors import CORSMiddleware
-from starlette.routing import Route
-from starlette.responses import JSONResponse
-from dotenv import load_dotenv
-
-# Importar nuestro servidor MCP
-from .mcp_server import mcp
-
-# Cargar variables de entorno desde .env
-load_dotenv()
-
-# Obtener la aplicación Starlette del servidor MCP
-# Ya incluye el endpoint /mcp configurado automáticamente
-app = mcp.streamable_http_app()
-```
-
-**Qué hace esto:**
-- `mcp.streamable_http_app()`: Obtiene la aplicación ASGI/Starlette del servidor MCP
-- El endpoint `/mcp` ya está configurado automáticamente
-- No necesitas crear una aplicación FastAPI separada ni montar nada
-- **Importante**: El servidor MCP maneja todo el protocolo JSON-RPC 2.0 automáticamente
-
-**Paso 3: Configurar CORS**
-
-Agrega el middleware CORS para que ChatGPT pueda llamar tu servidor:
-
-```python
-"""Aplicación principal que expone el servidor MCP."""
-
-from starlette.middleware.cors import CORSMiddleware
-from starlette.routing import Route
-from starlette.responses import JSONResponse
-from dotenv import load_dotenv
-
-# Importar nuestro servidor MCP
-from .mcp_server import mcp
-
-# Cargar variables de entorno desde .env
-load_dotenv()
-
-# Obtener la aplicación Starlette del servidor MCP
-app = mcp.streamable_http_app()
-
-# CORS: Permite que ChatGPT hable con tu app
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # En producción, especifica dominios
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-```
-
-**Qué hace esto:**
-- CORS (Cross-Origin Resource Sharing): Permite solicitudes desde otros dominios
-- `allow_origins=["*"]`: Permite peticiones desde cualquier origen (⚠️ para desarrollo, en producción especifica dominios)
-- `allow_credentials=True`: Permite que las peticiones incluyan cookies y credenciales de autenticación
-- `allow_methods=["*"]`: Permite todos los métodos HTTP (GET, POST, PUT, DELETE, etc.)
-- `allow_headers=["*"]`: Permite todos los headers HTTP en las peticiones (Content-Type, Authorization, etc.)
-- **Importante**: Sin CORS, ChatGPT no podría comunicarse con tu servidor
-
-**Paso 4: Agregar Endpoint de Salud**
-
-Agrega un endpoint simple en la raíz para verificar que el servidor está vivo:
-
-```python
-"""Aplicación principal que expone el servidor MCP."""
-
-from starlette.middleware.cors import CORSMiddleware
-from starlette.routing import Route
-from starlette.responses import JSONResponse
-from dotenv import load_dotenv
-
-# Importar nuestro servidor MCP
-from .mcp_server import mcp
-
-# Cargar variables de entorno desde .env
-load_dotenv()
-
 # Endpoint de salud
 async def health_check(request):
     """Endpoint raíz para verificar que el servidor está vivo."""
@@ -1463,13 +949,32 @@ async def health_check(request):
         "mcp_endpoint": "/mcp",
         "status": "ok"
     })
+```
 
+**Qué hace esto:**
+- Define una función que responde en la ruta raíz `/`
+- Útil para verificar que el servidor está funcionando
+- Muestra información sobre dónde está el endpoint MCP
+
+**Paso 3: Obtener la Aplicación del Servidor MCP**
+
+```python
 # Obtener la aplicación Starlette del servidor MCP
+# Ya incluye el endpoint /mcp configurado automáticamente
 app = mcp.streamable_http_app()
 
 # Agregar ruta de salud
 app.routes.append(Route("/", health_check))
+```
 
+**Qué hace esto:**
+- `mcp.streamable_http_app()`: FastMCP crea automáticamente una aplicación Starlette
+- El endpoint `/mcp` ya está configurado (no necesitas hacer nada más!)
+- Agregamos nuestra ruta de salud en `/`
+
+**Paso 4: Configurar CORS**
+
+```python
 # CORS: Permite que ChatGPT hable con tu app
 app.add_middleware(
     CORSMiddleware,
@@ -1481,16 +986,12 @@ app.add_middleware(
 ```
 
 **Qué hace esto:**
-- Define una función `health_check` que retorna información del servidor
-- `JSONResponse`: Retorna un objeto JSON
-- `Route("/", health_check)`: Crea una ruta en `/` que llama a `health_check`
-- `app.routes.append()`: Agrega la ruta al servidor MCP
-- **Útil**: Puedes visitar `http://localhost:8000/` para verificar que funciona
+- CORS (Cross-Origin Resource Sharing) permite que ChatGPT se comunique con tu servidor
+- `allow_origins=["*"]`: Permite peticiones desde cualquier origen (⚠️ solo para desarrollo)
+- Sin CORS, ChatGPT no podría llamar a tus herramientas
 
 **Archivo `src/helloworld_app/main.py` Completo:**
 
-Tu archivo final debe verse así:
-
 ```python
 """Aplicación principal que expone el servidor MCP."""
 
@@ -1531,14 +1032,16 @@ app.add_middleware(
 )
 ```
 
-🎓 **Aprendiste**:
-- Cómo obtener la aplicación ASGI del servidor MCP
-- Por qué usamos Starlette en lugar de FastAPI (el servidor MCP ya crea la aplicación)
-- Que `streamable_http_app()` configura automáticamente el endpoint `/mcp`
-- Cómo agregar rutas personalizadas al servidor MCP con `app.routes.append()`
-- Cómo crear un endpoint de salud para verificar el estado del servidor
-- Por qué necesitamos CORS para que ChatGPT se comunique con tu app
-- Cómo configurar CORS con todos los parámetros necesarios
+**¡Solo 35 líneas de código!** Y ya tienes una aplicación MCP completa lista para conectar con ChatGPT.
+
+🎓 **Aprendiste:**
+- Cómo obtener la app del servidor MCP con `streamable_http_app()`
+- Por qué usamos Starlette (FastMCP crea la app por nosotros)
+- Que el endpoint `/mcp` se configura automáticamente
+- Cómo agregar rutas personalizadas con `app.routes.append()`
+- Por qué necesitamos CORS para ChatGPT
+
+---
 
 ### 3.5 Agregar Comando `dev` al justfile
 
@@ -1626,9 +1129,9 @@ Si ves este JSON, ¡tu servidor está corriendo correctamente! ✅
 
 **Detener el servidor:** Presiona `Ctrl+C` en la terminal donde corre `just dev`.
 
-🎓 **Aprendiste**:
+🎓 **Aprendiste:**
 - Cuándo agregar el comando `dev` (después de crear los archivos Python)
-- Cómo uvicorn ejecuta aplicaciones FastAPI
+- Cómo uvicorn ejecuta aplicaciones ASGI/Starlette
 - Cómo validar que el servidor está corriendo
 - Cómo detener el servidor de desarrollo
 
@@ -1647,10 +1150,6 @@ En esta parte vamos a probar directamente el **protocolo MCP** usando JSON-RPC 2
 **Prerequisitos:**
 - ✅ Servidor corriendo en terminal 1 con `just dev`
 - ✅ Terminal 2 abierta para ejecutar curl
-
-**⚠️ Nota sobre stateless_http:**
-
-Nuestro servidor usa `stateless_http=True`, lo que significa que **no mantiene sesiones**. Esto hace que sea fácil probarlo con curl (cada request es independiente).
 
 **⚠️ Nota sobre Server-Sent Events (SSE):**
 
@@ -1808,7 +1307,6 @@ curl -X POST http://localhost:8000/mcp \
 - `"input"`: Objeto que contiene los parámetros (requerido porque la función espera `input: SayHelloInput`)
 - `"name": "María"`: Diferente nombre
 - `"emoji": false`: Sin emoji
-- Como el servidor es stateless, cada request es independiente
 - `2>/dev/null | grep '^data:' | sed 's/^data: //'`: Extrae el JSON del formato SSE
 
 **✅ Validar:**
@@ -1821,8 +1319,6 @@ Si el emoji no aparece, ¡los parámetros funcionan correctamente! ✅
 - Cómo probar tu servidor MCP localmente con curl
 - El formato de solicitudes JSON-RPC 2.0 (`method`, `params`, `id`)
 - Cómo llamar herramientas MCP directamente sin ChatGPT
-- La diferencia entre `stateless_http=True` (sin sesiones) y `stateless_http=False` (con sesiones)
-- Por qué usamos `stateless_http=True` para facilitar el testing con curl
 - **Que el servidor MCP responde en formato Server-Sent Events (SSE)**, no JSON puro
 - **Cómo extraer JSON de SSE** usando `grep '^data:' | sed 's/^data: //'`
 - Por qué necesitamos el header `Accept: application/json, text/event-stream`
@@ -1890,7 +1386,23 @@ curl -X POST https://abc123-45-67-89-10.ngrok-free.app/mcp \
 
 Deberías ver la lista de herramientas MCP (como `say_hello`). ✅
 
-### 5.4 Ir a OpenAI Platform
+### 5.4 Conectar desde ChatGPT
+
+Hay dos formas de conectar tu app a ChatGPT:
+
+**Opción A: Desde ChatGPT directamente (Recomendado)**
+
+1. Abre ChatGPT: https://chatgpt.com
+2. Escribe en el chat:
+   ```
+   Conecta con mi servidor MCP en: https://tu-url-ngrok.ngrok-free.app/mcp
+   ```
+   ⚠️ **Importante**: Reemplaza `tu-url-ngrok.ngrok-free.app` con tu URL real de ngrok, y **no olvides el `/mcp` al final**
+
+3. ChatGPT te pedirá confirmación. Acepta la conexión.
+4. ¡Listo! ChatGPT ahora puede usar tus herramientas.
+
+**Opción B: Desde OpenAI Platform**
 
 1. Visita: https://platform.openai.com/playground/apps
 2. Click en "Create App"
@@ -1898,14 +1410,14 @@ Deberías ver la lista de herramientas MCP (como `say_hello`). ✅
    - **Name**: Hola Mundo App
    - **Description**: Tutorial básico de MCP
    - **MCP Server URL**: `https://tu-url-ngrok.ngrok-free.app/mcp` (⚠️ no olvides el `/mcp`)
-
 4. Click en "Create"
+5. La app estará disponible en ChatGPT
 
 ### 5.5 Probar en ChatGPT
 
-Ahora en ChatGPT, puedes decir:
+Una vez conectado, en ChatGPT puedes decir:
 
-**Ejemplo 1: Llamar la herramienta**
+**Ejemplo: Llamar la herramienta**
 ```
 "Usa la app Hola Mundo para saludar a María"
 ```
@@ -1915,21 +1427,19 @@ ChatGPT debería:
 2. Recibir `¡Hola María! 👋`
 3. Mostrarte el resultado
 
-**Ejemplo 2: Mostrar el widget**
+**Otros ejemplos para probar:**
 ```
-"Muéstrame el widget de Hola Mundo"
+"Saluda a Juan sin emoji usando la app Hola Mundo"
+"Usa say_hello para saludar a Ana"
 ```
 
-ChatGPT mostrará tu interfaz HTML interactiva donde puedes:
-- Escribir un nombre
-- Elegir si quieres emoji
-- Hacer clic en "¡Saludar!"
-- Ver el resultado
+> **💡 Nota**: Si quieres agregar widgets HTML interactivos a tu app, consulta el tutorial avanzado "Agregando Widgets a tu App MCP" (próximamente).
 
 🎓 **Aprendiste**:
 - Cómo exponer tu servidor local con ngrok
 - Cómo registrar tu app en OpenAI Platform
 - Cómo probar tu app en ChatGPT
+- Cómo ChatGPT interpreta lenguaje natural para llamar tus herramientas
 
 ---
 
@@ -1940,8 +1450,8 @@ ChatGPT mostrará tu interfaz HTML interactiva donde puedes:
 - ✅ **MCP (Model Context Protocol)**: Protocolo para que ChatGPT se comunique con aplicaciones
 - ✅ **JSON-RPC 2.0**: Formato de mensajes que usa MCP
 - ✅ **Herramientas MCP**: Funciones que ChatGPT puede llamar
-- ✅ **Recursos MCP**: Contenido (como widgets HTML) que ChatGPT puede leer
-- ✅ **window.openai API**: API JavaScript para widgets
+- ✅ **Server-Sent Events (SSE)**: Formato de respuesta del servidor MCP
+- ✅ **Pydantic**: Validación de datos de entrada para herramientas
 
 ### Habilidades Técnicas
 
@@ -1949,8 +1459,9 @@ ChatGPT mostrará tu interfaz HTML interactiva donde puedes:
 - ✅ Gestionar dependencias con `pyproject.toml` y `uv`
 - ✅ Crear servidor MCP con FastMCP
 - ✅ Definir herramientas con `@mcp.tool()`
-- ✅ Crear widgets con `@mcp.resource()`
-- ✅ Integrar MCP con FastAPI
+- ✅ Validar entrada con modelos Pydantic
+- ✅ Integrar MCP con Starlette
+- ✅ Configurar CORS para permitir peticiones de ChatGPT
 - ✅ Probar con curl y JSON-RPC
 - ✅ Exponer servidor con ngrok
 - ✅ Registrar app en OpenAI Platform
@@ -1985,14 +1496,13 @@ Ahora que entiendes lo básico, puedes:
 
 - Cambia el emoji por otros: 🎉, 🌟, 💫
 - Añade más parámetros: idioma, hora del día (buenos días/tardes/noches)
-- Cambia los colores del widget
-- Modifica los estilos CSS
+- Añade un parámetro para elegir el estilo de saludo (formal/informal)
 
 ### Nivel 2: Nueva Herramienta
 
 - Añade una herramienta `farewell` que se despida
-- Crea un widget para despedidas
-- Prueba con ChatGPT
+- Añade parámetros como `name`, `emoji`, `formal`
+- Prueba ambas herramientas desde ChatGPT
 
 ### Nivel 3: Con Datos
 
@@ -2027,21 +1537,11 @@ Terminating session: None
 
 **¿Por qué aparece?**
 
-Esto ocurre porque nuestro servidor usa `stateless_http=True`:
-
-```python
-# En mcp_server.py
-mcp = FastMCP("Hola Mundo App", stateless_http=True)
-```
-
-**Qué significa `stateless_http=True`:**
-- **Sin sesiones persistentes**: Cada request es completamente independiente
-- **Perfecto para testing con curl**: No necesitas mantener una sesión abierta
-- **Después de cada request**: El servidor "termina" la sesión (que es `None` porque no existe)
+Esto es el comportamiento normal del servidor MCP. El mensaje "Terminating session: None" simplemente indica que el servidor ha completado el procesamiento de la solicitud.
 
 **Es normal y esperado** - ¡tu servidor está funcionando correctamente! 🎉
 
-Si quisieras sesiones persistentes (para apps más complejas), usarías `stateless_http=False`, pero entonces no podrías probar fácilmente con curl.
+Estos logs son informativos y puedes ignorarlos con seguridad. No afectan la funcionalidad de tu aplicación.
 
 ### Error: "jq: parse error: Invalid numeric literal"
 
