@@ -1431,7 +1431,9 @@ app.add_middleware(
 **Qué hace esto:**
 - CORS (Cross-Origin Resource Sharing): Permite solicitudes desde otros dominios
 - `allow_origins=["*"]`: Permite peticiones desde cualquier origen (⚠️ para desarrollo, en producción especifica dominios)
-- `allow_methods=["*"]`: Permite todos los métodos HTTP (GET, POST, etc.)
+- `allow_credentials=True`: Permite que las peticiones incluyan cookies y credenciales de autenticación
+- `allow_methods=["*"]`: Permite todos los métodos HTTP (GET, POST, PUT, DELETE, etc.)
+- `allow_headers=["*"]`: Permite todos los headers HTTP en las peticiones (Content-Type, Authorization, etc.)
 - **Importante**: Sin CORS, ChatGPT no podría comunicarse con tu servidor
 
 **Paso 4: Montar el Servidor MCP**
@@ -1469,12 +1471,12 @@ app.add_middleware(
 
 # Montar el servidor MCP en /mcp
 # Este es el endpoint que ChatGPT usará
-app.mount("/mcp", mcp.get_asgi_app())
+app.mount("/mcp", mcp.asgi_app)
 ```
 
 **Qué hace esto:**
 - `app.mount("/mcp", ...)`: Monta el servidor MCP en la ruta `/mcp`
-- `mcp.get_asgi_app()`: Obtiene la aplicación ASGI del servidor MCP
+- `mcp.asgi_app`: La aplicación ASGI del servidor MCP (atributo, no método)
 - **Resultado**: ChatGPT llamará a `http://tu-servidor/mcp` para comunicarse
 
 **Paso 5: Agregar Endpoint de Salud**
@@ -1512,7 +1514,7 @@ app.add_middleware(
 
 # Montar el servidor MCP en /mcp
 # Este es el endpoint que ChatGPT usará
-app.mount("/mcp", mcp.get_asgi_app())
+app.mount("/mcp", mcp.asgi_app)
 
 # Endpoint de salud (opcional, pero útil)
 @app.get("/")
@@ -1566,7 +1568,7 @@ app.add_middleware(
 
 # Montar el servidor MCP en /mcp
 # Este es el endpoint que ChatGPT usará
-app.mount("/mcp", mcp.get_asgi_app())
+app.mount("/mcp", mcp.asgi_app)
 
 # Endpoint de salud (opcional, pero útil)
 @app.get("/")
