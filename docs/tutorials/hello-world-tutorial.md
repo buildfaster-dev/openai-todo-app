@@ -1607,7 +1607,7 @@ INFO:     Application startup complete.
 
 En otra terminal, ejecuta:
 ```bash
-curl http://localhost:8000/
+curl http://localhost:8000/ | jq
 ```
 
 Deberías ver:
