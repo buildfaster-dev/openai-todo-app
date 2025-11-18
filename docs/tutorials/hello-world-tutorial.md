@@ -419,8 +419,8 @@ Agrega las dependencias principales que tu app necesita:
 
 ```toml
 dependencies = [
-    "fastapi>=0.115.0",           # Framework web para construir APIs
-    "uvicorn[standard]>=0.32.0",  # Servidor ASGI para ejecutar FastAPI
+    "fastapi>=0.115.0",           # Incluye Starlette (framework ASGI usado por MCP)
+    "uvicorn[standard]>=0.32.0",  # Servidor ASGI para ejecutar la aplicación
     "mcp[fastapi]>=0.1.0",        # Biblioteca Model Context Protocol
     "pydantic>=2.9.0",            # Validación de datos usando type hints
     "python-dotenv>=1.0.0",       # Cargar variables de entorno desde .env
@@ -428,10 +428,10 @@ dependencies = [
 ```
 
 **Qué hace cada dependencia:**
-- **fastapi**: Framework web moderno para construir APIs con documentación OpenAPI automática
-- **uvicorn**: Servidor ASGI ultra-rápido para ejecutar tu app FastAPI
-- **mcp[fastapi]**: Biblioteca oficial de MCP con integración FastAPI
-- **pydantic**: Validación de datos usando type hints de Python (requerido por FastAPI)
+- **fastapi**: Incluye Starlette, el framework ASGI que usaremos (MCP crea una aplicación Starlette)
+- **uvicorn**: Servidor ASGI ultra-rápido para ejecutar la aplicación
+- **mcp[fastapi]**: Biblioteca oficial de MCP con todas las dependencias necesarias
+- **pydantic**: Validación de datos usando type hints de Python
 - **python-dotenv**: Carga configuración desde archivos `.env`
 
 **Paso 3: Sistema de Construcción**
@@ -1334,7 +1334,7 @@ def show_hello_widget() -> str:
 - Cómo crear widgets con `@mcp.resource()`
 - Cómo usar `window.openai.callTool()` en JavaScript
 
-### 3.4 Crear la Aplicación FastAPI - Paso a Paso
+### 3.4 Crear la Aplicación Principal - Paso a Paso
 
 Ahora viene la integración. Vamos a construir `src/helloworld_app/main.py` paso a paso:
 
@@ -1343,10 +1343,9 @@ Ahora viene la integración. Vamos a construir `src/helloworld_app/main.py` paso
 Crea `src/helloworld_app/main.py` con los imports:
 
 ```python
-"""Aplicación FastAPI que expone el servidor MCP."""
+"""Aplicación principal que expone el servidor MCP."""
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 # Importar nuestro servidor MCP
@@ -1357,21 +1356,21 @@ load_dotenv()
 ```
 
 **Qué hace esto:**
-- Importa FastAPI para crear la aplicación web
-- Importa CORSMiddleware para permitir peticiones desde ChatGPT
+- Importa `CORSMiddleware` de Starlette para permitir peticiones desde ChatGPT
 - Importa `load_dotenv` para leer el archivo `.env`
 - Importa el servidor MCP que creamos en el paso anterior
 - Carga las variables de entorno (como `PUBLIC_URL`)
 
-**Paso 2: Crear la Aplicación FastAPI**
+**Nota**: Usamos Starlette (no FastAPI) porque el servidor MCP ya crea su propia aplicación ASGI.
 
-Agrega la creación de la app FastAPI:
+**Paso 2: Obtener la Aplicación del Servidor MCP**
+
+Agrega la obtención de la app del servidor MCP:
 
 ```python
-"""Aplicación FastAPI que expone el servidor MCP."""
+"""Aplicación principal que expone el servidor MCP."""
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 # Importar nuestro servidor MCP
@@ -1380,29 +1379,25 @@ from .mcp_server import mcp
 # Cargar variables de entorno desde .env
 load_dotenv()
 
-# Crear la aplicación FastAPI
-app = FastAPI(
-    title="Hola Mundo App",
-    description="Tutorial básico de OpenAI Apps SDK",
-    version="0.1.0"
-)
+# Obtener la aplicación Starlette del servidor MCP
+# Ya incluye el endpoint /mcp configurado automáticamente
+app = mcp.streamable_http_app()
 ```
 
 **Qué hace esto:**
-- `FastAPI()`: Crea la aplicación web
-- `title`: Nombre de tu app (aparece en documentación)
-- `description`: Descripción breve
-- `version`: Número de versión
+- `mcp.streamable_http_app()`: Obtiene la aplicación ASGI/Starlette del servidor MCP
+- El endpoint `/mcp` ya está configurado automáticamente
+- No necesitas crear una aplicación FastAPI separada ni montar nada
+- **Importante**: El servidor MCP maneja todo el protocolo JSON-RPC 2.0 automáticamente
 
 **Paso 3: Configurar CORS**
 
-Agrega el middleware CORS para que ChatGPT pueda llamar tu API:
+Agrega el middleware CORS para que ChatGPT pueda llamar tu servidor:
 
 ```python
-"""Aplicación FastAPI que expone el servidor MCP."""
+"""Aplicación principal que expone el servidor MCP."""
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 # Importar nuestro servidor MCP
@@ -1411,12 +1406,8 @@ from .mcp_server import mcp
 # Cargar variables de entorno desde .env
 load_dotenv()
 
-# Crear la aplicación FastAPI
-app = FastAPI(
-    title="Hola Mundo App",
-    description="Tutorial básico de OpenAI Apps SDK",
-    version="0.1.0"
-)
+# Obtener la aplicación Starlette del servidor MCP
+app = mcp.streamable_http_app()
 
 # CORS: Permite que ChatGPT hable con tu app
 app.add_middleware(
@@ -1436,112 +1427,14 @@ app.add_middleware(
 - `allow_headers=["*"]`: Permite todos los headers HTTP en las peticiones (Content-Type, Authorization, etc.)
 - **Importante**: Sin CORS, ChatGPT no podría comunicarse con tu servidor
 
-**Paso 4: Montar el Servidor MCP**
-
-Conecta tu servidor MCP a la aplicación FastAPI:
-
-```python
-"""Aplicación FastAPI que expone el servidor MCP."""
-
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
-
-# Importar nuestro servidor MCP
-from .mcp_server import mcp
-
-# Cargar variables de entorno desde .env
-load_dotenv()
-
-# Crear la aplicación FastAPI
-app = FastAPI(
-    title="Hola Mundo App",
-    description="Tutorial básico de OpenAI Apps SDK",
-    version="0.1.0"
-)
-
-# CORS: Permite que ChatGPT hable con tu app
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # En producción, especifica dominios
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Montar el servidor MCP en /mcp
-# Este es el endpoint que ChatGPT usará
-app.mount("/mcp", mcp.asgi_app)
-```
-
-**Qué hace esto:**
-- `app.mount("/mcp", ...)`: Monta el servidor MCP en la ruta `/mcp`
-- `mcp.asgi_app`: La aplicación ASGI del servidor MCP (atributo, no método)
-- **Resultado**: ChatGPT llamará a `http://tu-servidor/mcp` para comunicarse
-
-**Paso 5: Agregar Endpoint de Salud**
-
-Agrega un endpoint simple para verificar que el servidor funciona:
-
-```python
-"""Aplicación FastAPI que expone el servidor MCP."""
-
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
-
-# Importar nuestro servidor MCP
-from .mcp_server import mcp
-
-# Cargar variables de entorno desde .env
-load_dotenv()
-
-# Crear la aplicación FastAPI
-app = FastAPI(
-    title="Hola Mundo App",
-    description="Tutorial básico de OpenAI Apps SDK",
-    version="0.1.0"
-)
-
-# CORS: Permite que ChatGPT hable con tu app
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # En producción, especifica dominios
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Montar el servidor MCP en /mcp
-# Este es el endpoint que ChatGPT usará
-app.mount("/mcp", mcp.asgi_app)
-
-# Endpoint de salud (opcional, pero útil)
-@app.get("/")
-async def root():
-    """Endpoint raíz para verificar que el servidor está vivo."""
-    return {
-        "message": "Hola Mundo App está corriendo",
-        "mcp_endpoint": "/mcp",
-        "status": "ok"
-    }
-```
-
-**Qué hace esto:**
-- `@app.get("/")`: Define un endpoint HTTP GET en la raíz
-- `async def root()`: Función asíncrona que maneja la petición
-- Retorna JSON con información del servidor
-- **Útil**: Puedes visitar `http://localhost:8000/` para verificar que funciona
-
 **Archivo `src/helloworld_app/main.py` Completo:**
 
 Tu archivo final debe verse así:
 
 ```python
-"""Aplicación FastAPI que expone el servidor MCP."""
+"""Aplicación principal que expone el servidor MCP."""
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 # Importar nuestro servidor MCP
@@ -1550,12 +1443,9 @@ from .mcp_server import mcp
 # Cargar variables de entorno desde .env
 load_dotenv()
 
-# Crear la aplicación FastAPI
-app = FastAPI(
-    title="Hola Mundo App",
-    description="Tutorial básico de OpenAI Apps SDK",
-    version="0.1.0"
-)
+# Obtener la aplicación Starlette del servidor MCP
+# Ya incluye el endpoint /mcp configurado automáticamente
+app = mcp.streamable_http_app()
 
 # CORS: Permite que ChatGPT hable con tu app
 app.add_middleware(
@@ -1565,28 +1455,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Montar el servidor MCP en /mcp
-# Este es el endpoint que ChatGPT usará
-app.mount("/mcp", mcp.asgi_app)
-
-# Endpoint de salud (opcional, pero útil)
-@app.get("/")
-async def root():
-    """Endpoint raíz para verificar que el servidor está vivo."""
-    return {
-        "message": "Hola Mundo App está corriendo",
-        "mcp_endpoint": "/mcp",
-        "status": "ok"
-    }
 ```
 
 🎓 **Aprendiste**:
-- Cómo crear una aplicación FastAPI paso a paso
+- Cómo obtener la aplicación ASGI del servidor MCP
+- Por qué usamos Starlette en lugar de FastAPI (el servidor MCP ya crea la aplicación)
+- Que `streamable_http_app()` configura automáticamente el endpoint `/mcp`
 - Por qué necesitamos CORS para que ChatGPT se comunique con tu app
-- Cómo montar un servidor MCP en un endpoint
-- Cómo crear endpoints de salud para verificar el estado
-- La estructura completa de integración MCP + FastAPI
+- Cómo configurar CORS con todos los parámetros necesarios
 
 ### 3.5 Agregar Comando `dev` al justfile
 
