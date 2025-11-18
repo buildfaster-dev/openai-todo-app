@@ -810,14 +810,15 @@ from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
 import os
 
-# 1. Crear el servidor MCP
-mcp = FastMCP("Hola Mundo App")
+# 1. Crear el servidor MCP (stateless para poder probarlo con curl)
+mcp = FastMCP("Hola Mundo App", stateless_http=True)
 ```
 
 **Qué hace esto:**
 - Importa `FastMCP` desde `mcp.server.fastmcp` para crear el servidor MCP
 - Importa `Pydantic` para validación de datos
 - Crea una instancia del servidor MCP con un nombre
+- `stateless_http=True`: Hace que el servidor no requiera sesiones persistentes (permite probar con curl)
 
 **Paso 2: Definir el Modelo de Entrada**
 
@@ -1091,8 +1092,8 @@ from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
 import os
 
-# 1. Crear el servidor MCP
-mcp = FastMCP("Hola Mundo App")
+# 1. Crear el servidor MCP (stateless para poder probarlo con curl)
+mcp = FastMCP("Hola Mundo App", stateless_http=True)
 
 # 2. Definir el modelo de entrada para la herramienta
 class SayHelloInput(BaseModel):
@@ -1639,86 +1640,34 @@ Si ves este JSON, ¡tu servidor está corriendo correctamente! ✅
 
 En esta parte vamos a probar directamente el **protocolo MCP** usando JSON-RPC 2.0.
 
-### 4.1 Inicializar Sesión MCP y Listar Herramientas
+### 4.1 Listar Herramientas MCP Disponibles
 
 **Prerequisitos:**
 - ✅ Servidor corriendo en terminal 1 con `just dev`
 - ✅ Terminal 2 abierta para ejecutar curl
 
-**⚠️ Importante sobre sesiones MCP:**
+**⚠️ Nota sobre stateless_http:**
 
-El protocolo MCP con transporte HTTP requiere **manejo de sesiones**. Necesitamos:
-1. **Inicializar** el protocolo con `initialize`
-2. **Mantener la sesión** usando cookies
+Nuestro servidor usa `stateless_http=True`, lo que significa que **no mantiene sesiones**. Esto hace que sea fácil probarlo con curl (cada request es independiente).
 
-**Paso 1: Inicializar el Protocolo MCP**
+**Ejecutar la solicitud JSON-RPC:**
 
 ```bash
 curl -X POST http://localhost:8000/mcp \
-  -c cookies.txt \
   -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{
-    "jsonrpc": "2.0",
-    "method": "initialize",
-    "params": {
-      "protocolVersion": "2024-11-05",
-      "capabilities": {},
-      "clientInfo": {
-        "name": "test-client",
-        "version": "1.0.0"
-      }
-    },
-    "id": 0
-  }'
-```
-
-**Qué hace esto:**
-- `-c cookies.txt`: Guarda las cookies de sesión en un archivo
-- `"method": "initialize"`: Inicializa el protocolo MCP
-- `"protocolVersion"`: Versión del protocolo MCP
-- `"clientInfo"`: Información del cliente (nombre y versión)
-
-**Salida esperada:**
-
-Deberías ver algo como:
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 0,
-  "result": {
-    "protocolVersion": "2024-11-05",
-    "capabilities": {...},
-    "serverInfo": {
-      "name": "Hola Mundo App",
-      "version": "..."
-    }
-  }
-}
-```
-
-Si ves `"serverInfo"`, ¡la sesión MCP se inicializó! ✅
-
-**Paso 2: Listar Herramientas (Usando la Sesión)**
-
-Ahora podemos listar las herramientas **usando la sesión guardada**:
-
-```bash
-curl -X POST http://localhost:8000/mcp \
-  -b cookies.txt \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
   -d '{
     "jsonrpc": "2.0",
     "method": "tools/list",
     "id": 1
-  }'
+  }' | jq
 ```
 
 **Qué hace esto:**
-- `-b cookies.txt`: Envía las cookies de sesión guardadas
+- `POST http://localhost:8000/mcp`: Llamada al endpoint MCP
+- `Content-Type: application/json`: Indica que enviamos JSON
 - `"method": "tools/list"`: Solicita lista de herramientas disponibles
+- `"id": 1`: Identificador de la solicitud JSON-RPC
+- `| jq`: Formatea el JSON para que sea legible
 
 **✅ Validar:**
 
@@ -1732,12 +1681,19 @@ Deberías ver un JSON que incluye la herramienta `say_hello` con su esquema comp
     "tools": [
       {
         "name": "say_hello",
-        "description": "Saluda a alguien por su nombre",
+        "description": "Dice hola a alguien de manera amigable.",
         "inputSchema": {
           "type": "object",
           "properties": {
-            "name": {...},
-            "emoji": {...}
+            "name": {
+              "description": "Nombre de la persona a saludar",
+              "type": "string"
+            },
+            "emoji": {
+              "default": true,
+              "description": "¿Incluir emoji?",
+              "type": "boolean"
+            }
           },
           "required": ["name"]
         }
@@ -1747,20 +1703,18 @@ Deberías ver un JSON que incluye la herramienta `say_hello` con su esquema comp
 }
 ```
 
-Si ves la herramienta `say_hello` listada, ¡el protocolo MCP funciona completamente! ✅
+Si ves la herramienta `say_hello` listada, ¡el protocolo MCP funciona! ✅
 
 ### 4.2 Llamar la Herramienta MCP
 
 **Prerequisitos:**
-- ✅ Sección 4.1 completada (sesión inicializada y `cookies.txt` creado)
+- ✅ Sección 4.1 completada (sabes que `say_hello` existe)
 
 Ahora vamos a **ejecutar** la herramienta `say_hello`:
 
 ```bash
 curl -X POST http://localhost:8000/mcp \
-  -b cookies.txt \
   -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
   -d '{
     "jsonrpc": "2.0",
     "method": "tools/call",
@@ -1772,14 +1726,14 @@ curl -X POST http://localhost:8000/mcp \
       }
     },
     "id": 2
-  }'
+  }' | jq
 ```
 
 **Qué hace esto:**
-- `-b cookies.txt`: Usa la sesión guardada
 - `"method": "tools/call"`: Ejecuta una herramienta
 - `"name": "say_hello"`: Nombre de la herramienta a ejecutar
 - `"arguments"`: Parámetros de entrada (name: "Claude", emoji: true)
+- `| jq`: Formatea el JSON para que sea legible
 
 **✅ Validar:**
 
@@ -1811,9 +1765,7 @@ Ahora probemos **sin emoji** para verificar que el parámetro `emoji` funciona:
 
 ```bash
 curl -X POST http://localhost:8000/mcp \
-  -b cookies.txt \
   -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
   -d '{
     "jsonrpc": "2.0",
     "method": "tools/call",
@@ -1825,13 +1777,13 @@ curl -X POST http://localhost:8000/mcp \
       }
     },
     "id": 3
-  }'
+  }' | jq
 ```
 
 **Qué hace esto:**
-- `-b cookies.txt`: Usa la sesión guardada (mismo que antes)
 - `"name": "María"`: Diferente nombre
 - `"emoji": false`: Sin emoji
+- Como el servidor es stateless, cada request es independiente
 
 **✅ Validar:**
 
@@ -1840,12 +1792,12 @@ Deberías ver en el resultado: `"¡Hola María!"` (sin el emoji 👋)
 Si el emoji no aparece, ¡los parámetros funcionan correctamente! ✅
 
 🎓 **Aprendiste**:
-- Que el protocolo MCP con HTTP requiere **manejo de sesiones**
-- Cómo inicializar una sesión MCP con el método `initialize`
-- Cómo usar cookies con curl (`-c` para guardar, `-b` para enviar)
-- El formato de solicitudes JSON-RPC 2.0
-- Cómo llamar herramientas MCP directamente con curl
-- La importancia de mantener la sesión entre solicitudes
+- Cómo probar tu servidor MCP localmente con curl
+- El formato de solicitudes JSON-RPC 2.0 (`method`, `params`, `id`)
+- Cómo llamar herramientas MCP directamente sin ChatGPT
+- La diferencia entre `stateless_http=True` (sin sesiones) y `stateless_http=False` (con sesiones)
+- Por qué usamos `stateless_http=True` para facilitar el testing con curl
+- Cómo usar `jq` para formatear respuestas JSON
 
 ---
 
